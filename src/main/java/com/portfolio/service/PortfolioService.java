@@ -154,4 +154,12 @@ public class PortfolioService {
     public void updateMeetingRequest(MeetingRequest request) {
         meetingRequestRepository.save(request);
     }
+
+    public Resume getLatestResumeByOrder() {
+        return resumeRepository.findTopByOrderByUpdatedAtDesc(); // assuming JPA repository
+    }
+
+    public void deleteResume(Long id) {
+        resumeRepository.deleteById(id);
+    }
 }

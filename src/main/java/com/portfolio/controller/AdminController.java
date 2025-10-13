@@ -8,6 +8,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -110,22 +112,44 @@ public class AdminController {
         }
 
         try {
+            String uploadDir = "src/main/resources/static/resume/";
             String fileName = "Himanshu_Resume.pdf";
-            Path path = Paths.get("src/main/resources/static/resume/" + fileName);
-            Files.write(path, file.getBytes());
+            Path newFilePath = Paths.get(uploadDir + fileName);
 
-            Resume resume = new Resume();
-            resume.setFileName(fileName);
-            resume.setUpdatedAt(LocalDateTime.now());
-            portfolioService.saveResume(resume);
+            File dir = new File(uploadDir);
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
 
-            redirectAttributes.addFlashAttribute("success", "Resume uploaded successfully!");
-        } catch (IOException e) {
+            Resume oldResume = portfolioService.getLatestResume();
+            if (oldResume != null) {
+                Path oldFilePath = Paths.get(uploadDir + oldResume.getFileName());
+                try {
+                    Files.deleteIfExists(oldFilePath);
+                } catch (IOException ex) {
+                    System.err.println("Could not delete old file: " + ex.getMessage());
+                }
+                portfolioService.deleteResume(oldResume.getId());
+            }
+
+            Files.write(newFilePath, file.getBytes());
+
+            Resume newResume = new Resume();
+            newResume.setFileName(fileName);
+            newResume.setUpdatedAt(LocalDateTime.now());
+            portfolioService.saveResume(newResume);
+
+            redirectAttributes.addFlashAttribute("success", "Resume updated successfully!");
+
+        } catch (Exception e) {
+            e.printStackTrace();
             redirectAttributes.addFlashAttribute("error", "Failed to upload resume: " + e.getMessage());
         }
 
         return "redirect:/admin/dashboard";
     }
+
+
 
     @PostMapping("/meeting/update/{id}")
     public String updateMeeting(@PathVariable Long id, @RequestParam String meetingLink, 
