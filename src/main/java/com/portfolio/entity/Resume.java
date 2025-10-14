@@ -17,4 +17,10 @@ public class Resume {
 
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    @PreUpdate
+    public void setUpdatedTimestamp() {
+        this.updatedAt = LocalDateTime.now();
+    }
 }

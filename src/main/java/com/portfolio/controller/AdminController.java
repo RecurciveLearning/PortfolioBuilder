@@ -110,44 +110,34 @@ public class AdminController {
             redirectAttributes.addFlashAttribute("error", "Please select a file to upload");
             return "redirect:/admin/dashboard";
         }
-
         try {
-            String uploadDir = "src/main/resources/static/resume/";
+            String uploadDir = System.getProperty("user.dir") + "/uploads/resume/";
             String fileName = "Himanshu_Resume.pdf";
             Path newFilePath = Paths.get(uploadDir + fileName);
 
             File dir = new File(uploadDir);
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
+            if (!dir.exists()) dir.mkdirs();
 
             Resume oldResume = portfolioService.getLatestResume();
             if (oldResume != null) {
                 Path oldFilePath = Paths.get(uploadDir + oldResume.getFileName());
-                try {
-                    Files.deleteIfExists(oldFilePath);
-                } catch (IOException ex) {
-                    System.err.println("Could not delete old file: " + ex.getMessage());
-                }
+                Files.deleteIfExists(oldFilePath);
                 portfolioService.deleteResume(oldResume.getId());
             }
-
             Files.write(newFilePath, file.getBytes());
-
             Resume newResume = new Resume();
             newResume.setFileName(fileName);
-            newResume.setUpdatedAt(LocalDateTime.now());
+           // newResume.setUpdatedAt(LocalDateTime.now());
             portfolioService.saveResume(newResume);
-
             redirectAttributes.addFlashAttribute("success", "Resume updated successfully!");
 
         } catch (Exception e) {
             e.printStackTrace();
             redirectAttributes.addFlashAttribute("error", "Failed to upload resume: " + e.getMessage());
         }
-
         return "redirect:/admin/dashboard";
     }
+
 
 
 

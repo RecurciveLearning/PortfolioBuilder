@@ -643,5 +643,19 @@ input, textarea, select {
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
+.social-btn:hover {
+    background-color: rgba(255,255,255,0.1);
+    transform: scale(1.1);
+    transition: all 0.3s ease;
+}
 
+/* Bounce animation for scroll icon */
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-10px); }
+    60% { transform: translateY(-5px); }
+}
+.animate-bounce {
+    animation: bounce 2s infinite;
+}
 
