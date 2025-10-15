@@ -26,28 +26,29 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/admin/**").hasRole("ADMIN")
-                .requestMatchers("/", "/css/**", "/js/**", "/images/**", "/resume/**", 
-                                "/contact", "/meeting/request").permitAll()
-                .anyRequest().authenticated()
-            )
-            .formLogin(form -> form
-                .loginPage("/admin/login")
-                .defaultSuccessUrl("/admin/dashboard", true)
-                .permitAll()
-            )
-            .logout(logout -> logout
-                .logoutUrl("/admin/logout")
-                .logoutSuccessUrl("/")
-                .permitAll()
-            )
-            .csrf(csrf -> csrf
-                .ignoringRequestMatchers("/contact", "/meeting/request")
-            );
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/", "/css/**", "/js/**", "/images/**", "/resume/**",
+                                "/contact", "/meeting/request", "/api/chat/**").permitAll()
+                        .anyRequest().authenticated()
+                )
+                .formLogin(form -> form
+                        .loginPage("/admin/login")
+                        .defaultSuccessUrl("/admin/dashboard", true)
+                        .permitAll()
+                )
+                .logout(logout -> logout
+                        .logoutUrl("/admin/logout")
+                        .logoutSuccessUrl("/")
+                        .permitAll()
+                )
+                .csrf(csrf -> csrf
+                        .ignoringRequestMatchers("/contact", "/meeting/request", "/api/chat/**")
+                ); // ✅ Disable CSRF for API endpoints
 
         return http.build();
     }
+
 
     @Bean
     public UserDetailsService userDetailsService() {

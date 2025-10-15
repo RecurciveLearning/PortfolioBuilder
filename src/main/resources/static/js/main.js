@@ -1,9 +1,11 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // ----- AOS Animation -----
     AOS.init({
         duration: 1000,
         once: true
     });
 
+    // ----- Typed Text -----
     const typedElement = document.getElementById('typed-text');
     if (typedElement) {
         new Typed('#typed-text', {
@@ -14,8 +16,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // ----- Theme Toggle -----
     const themeToggle = document.getElementById('themeToggle');
     if (themeToggle) {
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        themeToggle.querySelector('i').className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+
         themeToggle.addEventListener('click', function() {
             const currentTheme = document.documentElement.getAttribute('data-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
@@ -23,12 +30,9 @@ document.addEventListener('DOMContentLoaded', function() {
             localStorage.setItem('theme', newTheme);
             this.querySelector('i').className = newTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
         });
-
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        themeToggle.querySelector('i').className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
     }
 
+    // ----- Contact Form -----
     const contactForm = document.getElementById('contactForm');
     if (contactForm) {
         contactForm.addEventListener('submit', async function(e) {
@@ -38,17 +42,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 email: this.email.value,
                 message: this.message.value
             };
-
             try {
                 const response = await fetch('/contact', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(formData)
                 });
-                
                 if (response.ok) {
                     alert('Message sent successfully!');
                     this.reset();
+                } else {
+                    alert('Error sending message. Please try again.');
                 }
             } catch (error) {
                 alert('Error sending message. Please try again.');
@@ -56,6 +60,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // ----- Meeting Form -----
     const meetingForm = document.getElementById('meetingForm');
     if (meetingForm) {
         meetingForm.addEventListener('submit', async function(e) {
@@ -68,17 +73,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 type: this.type.value,
                 message: this.message.value
             };
-
             try {
                 const response = await fetch('/meeting/request', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(formData)
                 });
-                
                 if (response.ok) {
                     alert('Meeting request submitted successfully!');
                     this.reset();
+                } else {
+                    alert('Error submitting meeting request. Please try again.');
                 }
             } catch (error) {
                 alert('Error submitting meeting request. Please try again.');
@@ -86,6 +91,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // ----- Smooth Scrolling -----
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
             e.preventDefault();
@@ -98,9 +104,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
-});
 
-document.addEventListener('DOMContentLoaded', function () {
+    // ----- Chat Box -----
     const chatBox = document.getElementById("chatBox");
     const chatToggle = document.getElementById("chatToggle");
     const chatIcon = document.getElementById("chatIcon");
@@ -108,58 +113,67 @@ document.addEventListener('DOMContentLoaded', function () {
     const chatSend = document.getElementById("chatSend");
     const chatBody = document.getElementById("chatBody");
 
-    // Toggle Chat Box
-    chatToggle.addEventListener("click", () => {
-        chatBox.classList.toggle("collapsed");
-        chatIcon.classList.toggle("fa-chevron-up");
-        chatIcon.classList.toggle("fa-chevron-down");
-    });
+    if (chatBox && chatToggle && chatInput && chatSend && chatBody) {
+        // Toggle Chat Box
+        chatToggle.addEventListener("click", () => {
+            chatBox.classList.toggle("collapsed");
+            chatIcon.classList.toggle("fa-chevron-up");
+            chatIcon.classList.toggle("fa-chevron-down");
+        });
 
-    // Send Message
-    const sendMessage = async () => {
-        const message = chatInput.value.trim();
-        if (!message) return;
+        // Send Message
+        const sendMessage = async () => {
+            const message = chatInput.value.trim();
+            if (!message) return;
 
-        // Show user message
-        chatBody.innerHTML += `<div class="user-msg">${message}</div>`;
-        chatBody.scrollTop = chatBody.scrollHeight;
-        chatInput.value = "";
-
-        // Show typing indicator
-        const typingEl = document.createElement("div");
-        typingEl.classList.add("bot-msg", "typing");
-        typingEl.innerHTML = `<span></span><span></span><span></span>`;
-        chatBody.appendChild(typingEl);
-        chatBody.scrollTop = chatBody.scrollHeight;
-
-        try {
-            const response = await fetch("/api/chat", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message })
-            });
-
-            const data = await response.json();
-            typingEl.remove();
-
-            if (data.type === "text") {
-                chatBody.innerHTML += `<div class="bot-msg">${data.response}</div>`;
-            } else if (data.type === "image") {
-                chatBody.innerHTML += `<div class="bot-msg">${data.prompt}<br><img src="${data.imageUrl}" alt="AI Image"/></div>`;
-            }
-
+            // Show user message
+            chatBody.innerHTML += `<div class="user-msg">${message}</div>`;
             chatBody.scrollTop = chatBody.scrollHeight;
-        } catch (err) {
-            typingEl.remove();
-            chatBody.innerHTML += `<div class="bot-msg">Error: Please try again.</div>`;
-        }
-    };
+            chatInput.value = "";
 
-    chatInput.addEventListener("keypress", (e) => {
-        if (e.key === "Enter") sendMessage();
-    });
+            // Show typing indicator
+            const typingEl = document.createElement("div");
+            typingEl.classList.add("bot-msg", "typing");
+            typingEl.innerHTML = `<span></span><span></span><span></span>`;
+            chatBody.appendChild(typingEl);
+            chatBody.scrollTop = chatBody.scrollHeight;
 
-    chatSend.addEventListener("click", sendMessage);
+            try {
+                const response = await fetch("http://localhost:5000/api/chat/message", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ message })
+                });
+
+                // Check HTTP status
+                if (!response.ok) {
+                    throw new Error(`Server returned ${response.status}`);
+                }
+
+                const data = await response.json();
+                typingEl.remove();
+
+                if (data.type === "text") {
+                    chatBody.innerHTML += `<div class="bot-msg">${data.response}</div>`;
+                } else if (data.type === "image") {
+                    chatBody.innerHTML += `<div class="bot-msg">${data.prompt}<br><img src="${data.imageUrl}" alt="AI Image"/></div>`;
+                }
+
+                chatBody.scrollTop = chatBody.scrollHeight;
+            } catch (err) {
+                typingEl.remove();
+                chatBody.innerHTML += `<div class="bot-msg">Error: Please try again. (${err.message})</div>`;
+                console.error("Chat fetch error:", err);
+            }
+        };
+
+        chatInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") sendMessage();
+        });
+
+        chatSend.addEventListener("click", sendMessage);
+    }
+
 });
-
-
