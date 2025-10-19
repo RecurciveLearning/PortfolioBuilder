@@ -98,6 +98,7 @@ public class BlogController {
         ra.addFlashAttribute("message", "Blog saved successfully!");
         return "redirect:/blogs";
     }
+    
 
     private String shortenUrl(String longUrl) {
         try {
