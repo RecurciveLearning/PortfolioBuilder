@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // ----- AOS Animation -----
     AOS.init({
         duration: 1000,
@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.documentElement.setAttribute('data-theme', savedTheme);
         themeToggle.querySelector('i').className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
 
-        themeToggle.addEventListener('click', function() {
+        themeToggle.addEventListener('click', function () {
             const currentTheme = document.documentElement.getAttribute('data-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', newTheme);
@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // ----- Contact Form -----
     const contactForm = document.getElementById('contactForm');
     if (contactForm) {
-        contactForm.addEventListener('submit', async function(e) {
+        contactForm.addEventListener('submit', async function (e) {
             e.preventDefault();
             const formData = {
                 name: this.name.value,
@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // ----- Meeting Form -----
     const meetingForm = document.getElementById('meetingForm');
     if (meetingForm) {
-        meetingForm.addEventListener('submit', async function(e) {
+        meetingForm.addEventListener('submit', async function (e) {
             e.preventDefault();
             const formData = {
                 name: this.name.value,
@@ -144,7 +144,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     headers: {
                         "Content-Type": "application/json"
                     },
-                    body: JSON.stringify({ message })
+                    body: JSON.stringify({message})
                 });
 
                 // Check HTTP status
@@ -177,3 +177,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 });
+
+
+
+

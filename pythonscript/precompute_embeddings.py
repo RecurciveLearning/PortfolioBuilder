@@ -11,9 +11,7 @@ conn = mysql.connector.connect(
 )
 cursor = conn.cursor(dictionary=True)
 model = SentenceTransformer('all-MiniLM-L6-v2')
-
 embeddings_data = []
-
 # Users
 cursor.execute("SELECT id, name, title, about_me FROM user_profile")
 for row in cursor.fetchall():

@@ -7,6 +7,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Component
 public class DataInitializer implements CommandLineRunner {
@@ -29,13 +30,20 @@ public class DataInitializer implements CommandLineRunner {
     @Autowired
     private ResumeRepository resumeRepository;
 
+    @Autowired
+    private  BlogRepository blogRepository;
+
+    @Autowired
+    private  CategoryRepository categoryRepository;
+
     @Override
     public void run(String... args) {
         if (userProfileRepository.count() == 0) {
             initializeData();
         }
-    }
 
+
+    }
     private void initializeData() {
         UserProfile profile = new UserProfile();
         profile.setName("Himanshu Singh");
@@ -101,4 +109,8 @@ public class DataInitializer implements CommandLineRunner {
         resume.setUpdatedAt(LocalDateTime.now());
         resumeRepository.save(resume);
     }
+
+
+
+
 }

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${blog.title} + ' - Blog'">Blog</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .blog-image-wrapper {
+            max-width: 300px;   /* Limit image width */
+            margin: 0 auto;     /* Center horizontally */
+            overflow: hidden;   /* Prevent overflow */
+        }
+
+        /* Main blog image */
+        .blog-image {
+            width: 100%;        /* Fill wrapper */
+            height: auto;       /* Maintain aspect ratio */
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+            display: block;
+        }
+
+        .blog-image:hover {
+            transform: scale(1.03);
+        }
+
+        /* Recommended blog images */
+        .recommended .card-img-top {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 10px 10px 0 0;
+            transition: transform 0.3s ease;
+        }
+
+        .recommended .card:hover .card-img-top {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow-sm">
+    <div class="container">
+        <a class="navbar-brand" href="/">Himanshu Singh</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/blogs">Blogs</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Blog Section -->
+<section class="py-5" style="margin-top:70px;">
+    <div class="container">
+        <h1 class="fw-bold mb-3" th:text="${blog.title}">Blog Title</h1>
+        <p class="text-muted mb-4" th:text="${#temporals.format(blog.createdAt,'MMM dd, yyyy')}">Jan 01, 2024</p>
+
+        <!-- Blog Image -->
+        <div class="blog-image-wrapper mb-4" th:if="${blog.imageUrl != null}">
+            <img th:src="${blog.imageUrl}" alt="Blog Image" class="blog-image">
+        </div>
+
+        <!-- Show truncated image URL -->
+        <div th:if="${shortImageUrl != null}" class="small-url mb-3">
+            <i class="fa fa-link"></i>
+            Image URL: <span th:text="${shortImageUrl}"></span>
+        </div>
+
+        <!-- Blog Content -->
+        <div class="blog-content" th:utext="${blog.content}">
+            Blog content goes here...
+        </div>
+
+        <!-- Share Buttons -->
+        <div class="mt-4">
+            <span class="fw-semibold">Share this post:</span>
+            <a th:href="'https://twitter.com/intent/tweet?url=' + ${currentUrl}" target="_blank" class="btn btn-sm btn-outline-primary me-1"><i class="fab fa-twitter"></i></a>
+            <a th:href="'https://www.linkedin.com/shareArticle?url=' + ${currentUrl}" target="_blank" class="btn btn-sm btn-outline-info me-1"><i class="fab fa-linkedin"></i></a>
+            <a th:href="'https://www.facebook.com/sharer/sharer.php?u=' + ${currentUrl}" target="_blank" class="btn btn-sm btn-outline-primary me-1"><i class="fab fa-facebook"></i></a>
+            <a th:href="'mailto:?subject=' + ${blog.title} + '&body=' + ${currentUrl}" class="btn btn-sm btn-outline-secondary"><i class="fas fa-envelope"></i></a>
+
+           <!-- <p class="small-url mt-2">
+                Short Link: <a th:href="${currentUrl}" target="_blank" th:text="${currentUrl}">short.link</a>
+            </p>-->
+        </div>
+    </div>
+</section>
+
+<!-- Recommended Blogs -->
+<section class="py-5 bg-light recommended" th:if="${recommendedBlogs}">
+    <div class="container">
+        <h3 class="mb-4">Recommended Blogs</h3>
+        <div class="row g-4">
+            <div class="col-md-4" th:each="b : ${recommendedBlogs}">
+                <div class="card h-100 shadow-sm">
+                    <img th:if="${b.image != null}" th:src="${b.image}" class="card-img-top" alt="Recommended Blog Image">
+                    <div class="card-body">
+                        <h5 class="card-title" th:text="${b.title}">Recommended Blog</h5>
+                        <p class="card-text" th:text="${b.summary}">Short description...</p>
+                        <a th:href="@{'/blogs/' + ${b.id}}" class="btn btn-outline-primary btn-sm">Read More</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="bg-dark text-white text-center py-4 mt-5">
+    <p class="mb-0">&copy; 2025 Himanshu Singh. All rights reserved.</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

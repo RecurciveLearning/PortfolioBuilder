@@ -24,6 +24,7 @@
                     <li class="nav-item"><a class="nav-link" href="#experience">Experience</a></li>
                     <li class="nav-item"><a class="nav-link" href="#skills">Skills</a></li>
                     <li class="nav-item"><a class="nav-link" href="#projects">Projects</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/blogs">Blog</a></li>
                     <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
                     <li class="nav-item"><a class="nav-link" href="/admin/login" target="_blank">Admin</a></li>
                     <li class="nav-item"><button class="btn btn-sm btn-outline-light ms-2" id="themeToggle"><i class="fas fa-moon"></i></button></li>
@@ -76,12 +77,47 @@
     </section>
 
     <!-- About Section -->
-    <section id="about" class="py-5"> <div class="container" data-aos="fade-up">
-        <h2 class="text-center mb-5 section-heading">About Me</h2>
-        <div class="row"> <div class="col-md-8 mx-auto"> <p class="lead" th:text="${profile?.aboutMe}"></p>
-        <div class="mt-4"> <p><strong>Email:</strong> <span th:text="${profile?.email}"></span></p> <p><strong>Phone:</strong>
-        <span th:text="${profile?.phone}"></span></p> <p><strong>Location:</strong> <span th:text="${profile?.city}"></span></p> </div> <h4 class="mt-4">Education</h4> <div th:each="edu : ${education}" class="mb-3"> <strong th:text="${edu.degree}"></strong> - <span th:text="${edu.university}"></span> <br><small th:text="${edu.year}"></small>
-    </div> <a href="/resume/download" class="btn btn-primary mt-3"><i class="fas fa-download"></i> Download Resume</a> <span class="ms-3" th:if="${resume}" th:text="'Last Updated: ' + ${#temporals.format(resume.updatedAt, 'MMM dd, yyyy')}"></span> </div> </div> </div> </section>
+    <section id="about" class="py-5">
+        <div class="container" data-aos="fade-up">
+            <h2 class="text-center mb-5 section-heading">About Me</h2>
+
+            <div class="row">
+                <div class="col-md-8 mx-auto">
+                    <p class="lead" th:text="${profile?.aboutMe}"></p>
+
+                    <div class="mt-4">
+                        <p><strong>Email:</strong> <span th:text="${profile?.email}"></span></p>
+                        <p><strong>Phone:</strong> <span th:text="${profile?.phone}"></span></p>
+                        <p><strong>Location:</strong> <span th:text="${profile?.city}"></span></p>
+                    </div>
+
+                    <h4 class="mt-4">Education</h4>
+                    <div th:each="edu : ${education}" class="mb-3">
+                        <strong th:text="${edu.degree}"></strong> -
+                        <span th:text="${edu.university}"></span><br>
+                        <small th:text="${edu.year}"></small>
+                    </div>
+
+                    <!-- ✅ Resume Buttons -->
+                    <div class="mt-3">
+                        <a href="/resume/download" class="btn btn-primary">
+                            <i class="fas fa-download"></i> Download Resume
+                        </a>
+
+                        <a href="/resume/preview" target="_blank" class="btn btn-outline-secondary ms-2">
+                            <i class="fas fa-eye"></i> Preview Resume
+                        </a>
+
+                        <span class="ms-3" th:if="${resume}"
+                              th:text="'Last Updated: ' + ${#temporals.format(resume.updatedAt, 'MMM dd, yyyy')}">
+                    </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
 
     <!-- Experience Section -->
     <section id="experience" class="py-5 bg-light">
@@ -220,7 +256,7 @@
     <div id="chatBox" class="chat-box collapsed">
         <!-- Header -->
         <div class="chat-header" id="chatToggle">
-            <span>Ask Me Anything</span>
+            <span>Ask Me Anything 🤖</span>
             <i class="fas fa-chevron-down" id="chatIcon"></i> <!-- default: down (collapsed) -->
         </div>
 

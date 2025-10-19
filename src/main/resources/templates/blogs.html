@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blogs - Portfolio</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .card-img-top {
+            height: 220px;
+            object-fit: cover;
+        }
+
+        .btn-read-more:hover {
+            transform: translateY(-2px);
+            transition: 0.2s;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow-sm">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="/">Himanshu Singh</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/blogs">Blogs</a></li>
+                <li class="nav-item"><a class="nav-link" href="/blogs/new" target="_blank">Write Blog</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Header -->
+<section class="py-5 bg-primary text-white text-center" style="margin-top:70px;">
+    <div class="container">
+        <h1 class="fw-bold">My Blogs</h1>
+        <p class="lead mb-0">Sharing thoughts, tutorials, and stories</p>
+    </div>
+</section>
+
+<!-- Blog Grid -->
+<section class="py-5">
+    <div class="container">
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            <div th:each="blog : ${blogs}" class="col">
+                <div class="card h-100 shadow-sm">
+                    <img th:if="${blog.imageUrl != null}" th:src="${blog.imageUrl}" class="card-img-top" alt="Blog Image">
+                    <div class="card-body">
+                        <h5 class="card-title" th:text="${blog.title}">Blog Title</h5>
+                        <p class="card-text" th:text="${blog.summary}">Blog short summary...</p>
+                        <a th:href="@{'/blogs/' + ${blog.id}}" class="btn btn-primary btn-sm btn-read-more">
+                            Read More <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                    <div class="card-footer text-muted">
+                        <small th:text="${#temporals.format(blog.createdAt, 'MMM dd, yyyy')}">Jan 01, 2024</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <nav th:if="${totalPages > 1}" aria-label="Page navigation">
+            <ul class="pagination justify-content-center mt-4">
+                <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                    <a class="page-link" th:href="@{/blogs(page=${currentPage-1}, size=${pageSize})}">Previous</a>
+                </li>
+                <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages-1)}"
+                    th:classappend="${i == currentPage} ? 'active'">
+                    <a class="page-link" th:text="${i+1}"
+                       th:href="@{/blogs(page=${i}, size=${pageSize})}">1</a>
+                </li>
+                <li class="page-item" th:classappend="${currentPage == totalPages-1} ? 'disabled'">
+                    <a class="page-link" th:href="@{/blogs(page=${currentPage+1}, size=${pageSize})}">Next</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</section>
+
+<footer class="bg-dark text-white text-center py-4 mt-5">
+    <p class="mb-0">&copy; 2025 Himanshu Singh. All rights reserved.</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

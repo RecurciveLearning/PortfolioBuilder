@@ -1,10 +1,12 @@
 package com.portfolio.controller;
 
 import com.portfolio.entity.*;
+import com.portfolio.repository.BlogRepository;
 import com.portfolio.service.PortfolioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +23,10 @@ public class HomeController {
 
     @Autowired
     private PortfolioService portfolioService;
+
+
+
+    private static final String RESUME_PATH = "static/resume/Himanshu_Resume.pdf";
 
     @GetMapping("/")
     public String home(Model model) {
@@ -44,19 +50,34 @@ public class HomeController {
         return "index";
     }
 
+    @GetMapping("/resume/preview")
+    public ResponseEntity<Resource> previewResume() throws IOException {
+        Resource resource = new ClassPathResource("static/resume/Himanshu_Resume.pdf");
+
+        if (!resource.exists()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=Himanshu_Resume.pdf")
+                .body(resource);
+    }
+
     @GetMapping("/resume/download")
     public ResponseEntity<Resource> downloadResume() throws IOException {
         Resource resource = new ClassPathResource("static/resume/Himanshu_Resume.pdf");
-        
-        if (resource.exists() && resource.isReadable()) {
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"Himanshu_Resume.pdf\"")
-                    .contentType(MediaType.APPLICATION_PDF)
-                    .body(resource);
-        } else {
+
+        if (!resource.exists()) {
             return ResponseEntity.notFound().build();
         }
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=Himanshu_Resume.pdf")
+                .body(resource);
     }
+
 
     @PostMapping("/contact")
     @ResponseBody
