@@ -6,33 +6,142 @@
     <title>Blogs - Portfolio</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="/css/style.css" rel="stylesheet">
+
     <style>
         body {
             background-color: #f8f9fa;
+            font-family: "Poppins", sans-serif;
+        }
+
+        /* ---------- Navbar ---------- */
+        .navbar {
+            background-color: #343a40; /* keep original dark */
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+        }
+
+        .nav-link.active {
+            color: #0d6efd !important;
+        }
+
+        /* ---------- Header ---------- */
+        header.blog-header {
+            text-align: center;
+            padding: 50px 0 40px; /* reduce top padding for no gap */
+            background-color: #0d6efd; /* bright blue header */
+            color: #fff;
+            margin-top: 0; /* no gap */
+        }
+
+        header.blog-header h1 {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        header.blog-header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        /* ---------- Blog Cards ---------- */
+        .card {
+            border: none;
+            border-radius: 1rem;
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+            background: linear-gradient(145deg, #ffffff, #f4f6f9);
         }
 
         .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            transition: transform 0.3s, box-shadow 0.3s;
+            transform: translateY(-8px);
+            box-shadow: 0 14px 30px rgba(0,0,0,0.15);
         }
 
         .card-img-top {
             height: 220px;
             object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+
+        .card:hover .card-img-top {
+            transform: scale(1.05);
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .card-title {
+            font-weight: 600;
+            font-size: 1.25rem;
+            margin-bottom: 0.6rem;
+            color: #0d6efd;
+        }
+
+        .card-text {
+            color: #555;
+            font-size: 0.95rem;
+            min-height: 60px;
+        }
+
+        .btn-read-more {
+            background-color: #0d6efd;
+            border: none;
+            color: #fff;
+            font-weight: 500;
+            border-radius: 30px;
+            padding: 0.45rem 1.1rem;
+            transition: all 0.3s;
         }
 
         .btn-read-more:hover {
+            background-color: #0b5ed7;
             transform: translateY(-2px);
-            transition: 0.2s;
+        }
+
+        .card-footer {
+            border-top: none;
+            background: transparent;
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+
+        /* ---------- Pagination ---------- */
+        .pagination .page-item.active .page-link {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+            color: #fff;
+        }
+
+        .pagination .page-link {
+            color: #0d6efd;
+            border-radius: 30px;
+            margin: 0 4px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .pagination .page-link:hover {
+            background-color: rgba(13,110,253,0.1);
+        }
+
+        /* ---------- Footer ---------- */
+        footer {
+            background-color: #343a40; /* original dark footer */
+            color: white;
+            padding: 1.5rem 0;
+            margin-top: 50px;
+            font-size: 0.95rem;
         }
     </style>
 </head>
 <body>
 
-<!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow-sm">
+<!-- Navbar (original dark navbar kept intact) -->
+<nav class="navbar navbar-expand-lg navbar-dark fixed-top shadow-sm">
     <div class="container">
         <a class="navbar-brand fw-bold" href="/">Himanshu Singh</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -49,25 +158,25 @@
 </nav>
 
 <!-- Header -->
-<section class="py-5 bg-primary text-white text-center" style="margin-top:70px;">
+<header class="blog-header">
     <div class="container">
-        <h1 class="fw-bold">My Blogs</h1>
-        <p class="lead mb-0">Sharing thoughts, tutorials, and stories</p>
+        <h1>✨ Explore My Blogs</h1>
+        <p>Sharing thoughts, tutorials, and stories</p>
     </div>
-</section>
+</header>
 
 <!-- Blog Grid -->
 <section class="py-5">
     <div class="container">
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
             <div th:each="blog : ${blogs}" class="col">
-                <div class="card h-100 shadow-sm">
+                <div class="card h-100">
                     <img th:if="${blog.imageUrl != null}" th:src="${blog.imageUrl}" class="card-img-top" alt="Blog Image">
                     <div class="card-body">
                         <h5 class="card-title" th:text="${blog.title}">Blog Title</h5>
                         <p class="card-text" th:text="${blog.summary}">Blog short summary...</p>
-                        <a th:href="@{'/blogs/' + ${blog.id}}" class="btn btn-primary btn-sm btn-read-more">
-                            Read More <i class="fas fa-arrow-right"></i>
+                        <a th:href="@{'/blogs/' + ${blog.id}}" class="btn btn-read-more">
+                            Read More <i class="fas fa-arrow-right ms-1"></i>
                         </a>
                     </div>
                     <div class="card-footer text-muted">
@@ -96,7 +205,8 @@
     </div>
 </section>
 
-<footer class="bg-dark text-white text-center py-4 mt-5">
+<!-- Footer (original dark footer kept intact) -->
+<footer class="text-center">
     <p class="mb-0">&copy; 2025 Himanshu Singh. All rights reserved.</p>
 </footer>
 
