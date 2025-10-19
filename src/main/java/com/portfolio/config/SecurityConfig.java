@@ -1,5 +1,4 @@
 package com.portfolio.config;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,6 +11,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+
 
 @Configuration
 @EnableWebSecurity
@@ -26,37 +27,45 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                // Authorize requests
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/admin/**"
-                        ).hasRole("ADMIN")
+                        // Admin pages
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        // Public pages
                         .requestMatchers(
                                 "/", "/css/**", "/js/**", "/images/**", "/resume/**",
-                                "/contact", "/meeting/request", "/api/chat/**", "/blogs/**", "/actuator/**"
+                                "/contact", "/meeting/request", "/blogs/**", "/actuator/**"
                         ).permitAll()
+                        // Any other request needs authentication
                         .anyRequest().authenticated()
                 )
+                // Form login configuration
                 .formLogin(form -> form
                         .loginPage("/admin/login")
-                        .loginProcessingUrl("/admin/login") // ✅ ensures Spring Security handles the login form post
+                        .loginProcessingUrl("/admin/login")
                         .defaultSuccessUrl("/admin/dashboard", true)
                         .permitAll()
                 )
+                // Logout configuration
                 .logout(logout -> logout
-                        .logoutUrl("/admin/logout")
+                        .logoutRequestMatcher(new AntPathRequestMatcher("/admin/logout"))
                         .logoutSuccessUrl("/")
                         .invalidateHttpSession(true)
                         .clearAuthentication(true)
                         .permitAll()
                 )
+                // CSRF configuration
                 .csrf(csrf -> csrf
                         .ignoringRequestMatchers("/contact", "/meeting/request", "/api/chat/**")
-                );
+                )
+        // Optional: allow H2 console frames
+        //.headers(headers -> headers.frameOptions().sameOrigin())
+        ;
 
         return http.build();
     }
 
-
+    // In-memory admin user
     @Bean
     public UserDetailsService userDetailsService() {
         UserDetails admin = User.builder()
@@ -68,6 +77,7 @@ public class SecurityConfig {
         return new InMemoryUserDetailsManager(admin);
     }
 
+    // Password encoder
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
