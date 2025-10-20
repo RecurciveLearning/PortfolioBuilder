@@ -36,6 +36,7 @@ public class RedisConfig {
         return template;
     }
 
+
     // CacheManager bean for @Cacheable support
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
