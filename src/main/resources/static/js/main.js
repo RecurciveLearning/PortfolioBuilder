@@ -105,7 +105,9 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // ----- Chat Box -----
+});
+
+document.addEventListener("DOMContentLoaded", () => {
     const chatBox = document.getElementById("chatBox");
     const chatToggle = document.getElementById("chatToggle");
     const chatIcon = document.getElementById("chatIcon");
@@ -113,70 +115,94 @@ document.addEventListener('DOMContentLoaded', function () {
     const chatSend = document.getElementById("chatSend");
     const chatBody = document.getElementById("chatBody");
 
-    if (chatBox && chatToggle && chatInput && chatSend && chatBody) {
-        // Toggle Chat Box
-        chatToggle.addEventListener("click", () => {
-            chatBox.classList.toggle("collapsed");
-            chatIcon.classList.toggle("fa-chevron-up");
-            chatIcon.classList.toggle("fa-chevron-down");
-        });
+    if (!(chatBox && chatToggle && chatIcon && chatInput && chatSend && chatBody)) return;
 
-        // Send Message
-        const sendMessage = async () => {
-            const message = chatInput.value.trim();
-            if (!message) return;
+    // Toggle Chat Box
+    chatToggle.addEventListener("click", () => {
+        chatBox.classList.toggle("collapsed");
+        chatIcon.classList.toggle("fa-chevron-up");
+        chatIcon.classList.toggle("fa-chevron-down");
+    });
 
-            // Show user message
-            chatBody.innerHTML += `<div class="user-msg">${message}</div>`;
-            chatBody.scrollTop = chatBody.scrollHeight;
-            chatInput.value = "";
+    // Append message
+    const appendMessage = (msg, type = "bot") => {
+        const div = document.createElement("div");
+        div.classList.add(type === "user" ? "user-msg" : "bot-msg");
+        div.textContent = msg;
+        chatBody.appendChild(div);
+        chatBody.scrollTop = chatBody.scrollHeight;
+    };
 
-            // Show typing indicator
-            const typingEl = document.createElement("div");
-            typingEl.classList.add("bot-msg", "typing");
-            typingEl.innerHTML = `<span></span><span></span><span></span>`;
-            chatBody.appendChild(typingEl);
-            chatBody.scrollTop = chatBody.scrollHeight;
+    // Send Message
+    const sendMessage = async () => {
+        const message = chatInput.value.trim();
+        if (!message) return;
 
-            try {
-                const response = await fetch("http://localhost:5000/api/chat/message", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({message})
-                });
+        appendMessage(message, "user");
+        chatInput.value = "";
 
-                // Check HTTP status
-                if (!response.ok) {
-                    throw new Error(`Server returned ${response.status}`);
-                }
+        // Typing indicator
+        const typingEl = document.createElement("div");
+        typingEl.classList.add("bot-msg", "typing");
+        typingEl.innerHTML = `<span></span><span></span><span></span>`;
+        chatBody.appendChild(typingEl);
+        chatBody.scrollTop = chatBody.scrollHeight;
 
-                const data = await response.json();
-                typingEl.remove();
+        try {
+            const response = await fetch("http://localhost:8080/api/chat/message", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json" // ensure we only accept JSON
+                },
+                body: JSON.stringify({ message })
+            });
 
-                if (data.type === "text") {
-                    chatBody.innerHTML += `<div class="bot-msg">${data.response}</div>`;
-                } else if (data.type === "image") {
-                    chatBody.innerHTML += `<div class="bot-msg">${data.prompt}<br><img src="${data.imageUrl}" alt="AI Image"/></div>`;
-                }
+            // Remove typing indicator
+            typingEl.remove();
 
-                chatBody.scrollTop = chatBody.scrollHeight;
-            } catch (err) {
-                typingEl.remove();
-                chatBody.innerHTML += `<div class="bot-msg">Error: Please try again. (${err.message})</div>`;
-                console.error("Chat fetch error:", err);
+            // Non-OK status
+            if (!response.ok) {
+                appendMessage(`Error: Server returned ${response.status}`, "bot");
+                return;
             }
-        };
 
-        chatInput.addEventListener("keypress", (e) => {
-            if (e.key === "Enter") sendMessage();
-        });
+            // Safe JSON parsing
+            let data;
+            const text = await response.text();
+            try {
+                data = JSON.parse(text);
+            } catch {
+                appendMessage("Error: Server returned non-JSON response", "bot");
+                console.error("Non-JSON response:", text);
+                return;
+            }
 
-        chatSend.addEventListener("click", sendMessage);
-    }
+            if (data.type === "text") {
+                appendMessage(data.response, "bot");
+            } else if (data.type === "image") {
+                const div = document.createElement("div");
+                div.classList.add("bot-msg");
+                div.innerHTML = `${data.prompt}<br><img src="${data.imageUrl}" alt="AI Image"/>`;
+                chatBody.appendChild(div);
+            }
 
+            chatBody.scrollTop = chatBody.scrollHeight;
+        } catch (err) {
+            typingEl.remove();
+            appendMessage(`Error: Please try again. (${err.message})`, "bot");
+            console.error("Chat fetch error:", err);
+        }
+    };
+
+    // Enter key
+    chatInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") sendMessage();
+    });
+
+    chatSend.addEventListener("click", sendMessage);
 });
+
 
 
 

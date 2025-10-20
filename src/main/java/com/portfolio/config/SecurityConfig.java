@@ -18,10 +18,10 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Value("${admin.username:admin}")
+    @Value("${admin.username:himanshu}")
     private String adminUsername;
 
-    @Value("${admin.password:admin123}")
+    @Value("${admin.password:himanshu1997}")
     private String adminPassword;
 
     @Bean
@@ -34,9 +34,10 @@ public class SecurityConfig {
                         // Public pages
                         .requestMatchers(
                                 "/", "/css/**", "/js/**", "/images/**", "/resume/**",
-                                "/contact", "/meeting/request", "/blogs/**", "/actuator/**"
+                                "/contact", "/meeting/request", "/blogs/**", "/actuator/**",
+                                "/api/chat/**" // Make chat API public
                         ).permitAll()
-                        // Any other request needs authentication
+                        // Any other request requires authentication
                         .anyRequest().authenticated()
                 )
                 // Form login configuration
@@ -56,11 +57,9 @@ public class SecurityConfig {
                 )
                 // CSRF configuration
                 .csrf(csrf -> csrf
+                        // Ignore CSRF for chat API
                         .ignoringRequestMatchers("/contact", "/meeting/request", "/api/chat/**")
-                )
-        // Optional: allow H2 console frames
-        //.headers(headers -> headers.frameOptions().sameOrigin())
-        ;
+                );
 
         return http.build();
     }

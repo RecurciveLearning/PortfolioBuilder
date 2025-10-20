@@ -81,29 +81,13 @@ public class BlogController {
         return "blog-form"; // Thymeleaf form
     }
 
-    /** Save blog - works for public users */
     @PostMapping("/save")
     public String saveBlog(@ModelAttribute Blog blog,
                            @RequestParam(value = "category.id", required = false) Long categoryId,
                            @RequestParam(value = "categoryName", required = false) String categoryName,
                            RedirectAttributes redirectAttributes) {
 
-        Category category = null;
-
-        // 1️⃣ Use existing category if selected
-        if (categoryId != null) {
-            category = categoryRepository.findById(categoryId)
-                    .orElseThrow(() -> new RuntimeException("Category not found"));
-        }
-        // 2️⃣ Create new category if provided
-        else if (categoryName != null && !categoryName.trim().isEmpty()) {
-            category = new Category();
-            category.setName(categoryName.trim());
-            categoryRepository.save(category); // persist category
-        }
-
-        blog.setCategory(category);
-        blogRepository.save(blog);
+        blogService.saveBlog(blog, categoryId, categoryName);
 
         redirectAttributes.addFlashAttribute("success", "Blog saved successfully!");
         return "redirect:/blogs";
