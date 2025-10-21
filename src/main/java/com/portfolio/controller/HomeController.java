@@ -2,6 +2,7 @@ package com.portfolio.controller;
 
 import com.portfolio.entity.*;
 import com.portfolio.repository.BlogRepository;
+import com.portfolio.service.CertificationService;
 import com.portfolio.service.PortfolioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
@@ -14,6 +15,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -24,9 +28,12 @@ public class HomeController {
     @Autowired
     private PortfolioService portfolioService;
 
+    @Autowired
+    private CertificationService certificationService;
 
 
     private static final String RESUME_PATH = "static/resume/Himanshu_Resume.pdf";
+
 
     @GetMapping("/")
     public String home(Model model) {
@@ -92,4 +99,29 @@ public class HomeController {
         portfolioService.saveMeetingRequest(request);
         return ResponseEntity.ok("Meeting request submitted successfully!");
     }
+
+    @GetMapping("/certifications")
+    public String certificationsPage() {
+        return "certifications"; // certifications.html
+    }
+
+    // ✅ New: Public API for certifications
+    @GetMapping("/certifications/list")
+    @ResponseBody
+    public List<Map<String, Object>> listPublicCertifications() {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy");
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Certification cert : certificationService.getAllCertifications()) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", cert.getId());
+            map.put("name", cert.getName());
+            map.put("organization", cert.getOrganization());
+            map.put("issueDate", cert.getIssueDate() != null ? cert.getIssueDate().format(formatter) : "");
+            map.put("verified", cert.isVerified());
+            map.put("certificateUrl", cert.getCertificateUrl());
+            result.add(map);
+        }
+        return result;
+    }
+
 }

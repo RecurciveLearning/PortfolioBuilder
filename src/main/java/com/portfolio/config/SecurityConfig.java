@@ -27,16 +27,17 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // Authorize requests
                 .authorizeHttpRequests(auth -> auth
                         // Admin pages
                         .requestMatchers("/admin/**").hasRole("ADMIN")
+
                         // Public pages
                         .requestMatchers(
                                 "/", "/css/**", "/js/**", "/images/**", "/resume/**",
-                                "/contact", "/meeting/request", "/blogs/**", "/actuator/**",
-                                "/api/chat/**" // Make chat API public
+                                "/contact", "/meeting/request", "/blogs/**",
+                                "/certifications", "/admin/certification/list" , "/certifications/**" // ✅ Make certification list public
                         ).permitAll()
+
                         // Any other request requires authentication
                         .anyRequest().authenticated()
                 )
@@ -57,8 +58,8 @@ public class SecurityConfig {
                 )
                 // CSRF configuration
                 .csrf(csrf -> csrf
-                        // Ignore CSRF for chat API
-                        .ignoringRequestMatchers("/contact", "/meeting/request", "/api/chat/**")
+                        // Ignore CSRF for APIs that are public
+                        .ignoringRequestMatchers("/contact", "/meeting/request", "/api/chat/**", "/admin/certification/list")
                 );
 
         return http.build();

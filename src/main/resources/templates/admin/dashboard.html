@@ -505,6 +505,203 @@
         </div>
 </div>
 
+<!-- Certifications Section -->
+<div class="card shadow-sm border-0 mt-4">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-award-fill me-2"></i>Certifications</h5>
+        <button id="verifyAllBtn" class="btn btn-light btn-sm">
+            <i class="bi bi-shield-check me-1"></i> Verify All
+        </button>
+    </div>
+
+    <div class="card-body bg-light">
+        <!-- Add Form -->
+        <form id="certForm" class="row g-3 mb-3">
+            <div class="col-md-3">
+                <input type="text" name="name" class="form-control" placeholder="Certificate Name" required>
+            </div>
+            <div class="col-md-3">
+                <input type="text" name="organization" class="form-control" placeholder="Organization" required>
+            </div>
+            <div class="col-md-2">
+                <input type="date" name="issueDate" class="form-control" required>
+            </div>
+            <div class="col-md-3">
+                <input type="url" name="certificateUrl" class="form-control" placeholder="Certificate URL">
+            </div>
+            <div class="col-md-1 d-grid">
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-plus-circle"></i>
+                </button>
+            </div>
+        </form>
+
+        <!-- Table -->
+        <div class="table-responsive">
+            <table class="table table-hover align-middle text-center mb-0">
+                <thead class="table-primary">
+                <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Organization</th>
+                    <th>Issue Date</th>
+                    <th>Verified</th>
+                    <th>Certificate URL</th>
+                    <th>Action</th>
+                </tr>
+                </thead>
+                <tbody id="certTableBody">
+                <!-- AJAX loaded rows go here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ✅ Dependencies -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- CSRF Tokens -->
+<meta name="_csrf" th:content="${_csrf.token}" />
+<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+
+<script>
+    $(document).ready(function () {
+        const csrfToken = $('meta[name="_csrf"]').attr('content');
+        const csrfHeader = $('meta[name="_csrf_header"]').attr('content');
+
+        // Load data initially
+        loadCertifications();
+
+        /** ✅ Add new certification */
+        $("#certForm").submit(function (e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+
+            $.ajax({
+                url: "/admin/certification/save",
+                method: "POST",
+                data: formData,
+                processData: false,
+                contentType: false,
+                beforeSend: function(xhr) {
+                    xhr.setRequestHeader(csrfHeader, csrfToken); // ✅ add CSRF
+                },
+                success: function (res) {
+                    if (res.success) {
+                        $("#certForm")[0].reset();
+                        showToast("✅ Certification added successfully!");
+                        loadCertifications();
+                    } else {
+                        showToast("❌ " + res.message, "danger");
+                    }
+                },
+                error: function () {
+                    showToast("❌ Error saving certification", "danger");
+                }
+            });
+        });
+
+        /** ✅ Delete certification */
+        window.deleteCertification = function (id) {
+            if (confirm("Are you sure you want to delete this certification?")) {
+                $.ajax({
+                    url: "/admin/certification/delete/" + id,
+                    method: "DELETE",
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader(csrfHeader, csrfToken); // ✅ add CSRF
+                    },
+                    success: function (res) {
+                        if (res.success) {
+                            showToast("🗑️ Certification deleted successfully!");
+                            loadCertifications();
+                        } else {
+                            showToast("❌ " + res.message, "danger");
+                        }
+                    },
+                    error: function () {
+                        showToast("❌ Error deleting certification", "danger");
+                    }
+                });
+            }
+        };
+
+        /** ✅ Verify all certifications (async trigger) */
+        $("#verifyAllBtn").click(function () {
+            $.ajax({
+                url: "/admin/certification/verify-all",
+                method: "POST",
+                beforeSend: function(xhr) {
+                    xhr.setRequestHeader(csrfHeader, csrfToken); // ✅ add CSRF
+                },
+                success: function (res) {
+                    if (res.success) {
+                        showToast("🔄 Verification started in background!");
+                        setTimeout(loadCertifications, 3000); // Refresh after a few seconds
+                    } else {
+                        showToast("❌ " + res.message, "danger");
+                    }
+                },
+                error: function () {
+                    showToast("❌ Error triggering verification", "danger");
+                }
+            });
+        });
+
+        /** ✅ Load all certifications */
+        function loadCertifications() {
+            $.get("/admin/certification/list", function (list) {
+                const tbody = $("#certTableBody");
+                tbody.empty();
+                if (list.length === 0) {
+                    tbody.append('<tr><td colspan="7" class="text-muted">No certifications found</td></tr>');
+                    return;
+                }
+                list.forEach((c, index) => {
+                    tbody.append(`
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${c.name}</td>
+                        <td>${c.organization}</td>
+                        <td>${c.issueDate || "-"}</td>
+                        <td>
+                            ${c.verified
+                        ? '<span class="badge bg-success"><i class="bi bi-check2-circle"></i> Verified</span>'
+                        : '<span class="badge bg-secondary"><i class="bi bi-x-circle"></i> Pending</span>'}
+                        </td>
+                        <td>
+                            ${c.certificateUrl
+                        ? `<a href="${c.certificateUrl}" target="_blank" class="text-decoration-none text-primary">View</a>`
+                        : '<span class="text-muted">N/A</span>'}
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-danger" onclick="deleteCertification(${c.id})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `);
+                });
+            });
+        }
+        /** ✅ Simple toast popup */
+        function showToast(message, type = "success") {
+            const toast = $(`
+            <div class="toast align-items-center text-white bg-${type} border-0 position-fixed bottom-0 end-0 m-3"
+                 role="alert" aria-live="assertive" aria-atomic="true" style="z-index:9999">
+                <div class="d-flex">
+                    <div class="toast-body">${message}</div>
+                </div>
+            </div>
+        `);
+            $("body").append(toast);
+            const bsToast = new bootstrap.Toast(toast[0], { delay: 3000 });
+            bsToast.show();
+            setTimeout(() => toast.remove(), 3500);
+        }
+    });
+</script>
+
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
