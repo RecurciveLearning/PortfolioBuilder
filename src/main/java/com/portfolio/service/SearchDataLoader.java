@@ -10,6 +10,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class SearchDataLoader {
+
     private final ProjectRepository projectRepo;
     private final SkillRepository skillRepo;
     private final EducationRepository eduRepo;

@@ -1,6 +1,8 @@
 package com.portfolio.service;
 import com.portfolio.entity.Certification;
 import com.portfolio.repository.CertificationRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,8 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import java.util.Optional;
 
-@Slf4j
 @Service
+@Slf4j
 public class CertificationService {
 
     private final CertificationRepository repo;
@@ -20,27 +22,35 @@ public class CertificationService {
         this.repo = repo;
     }
 
+    @Cacheable(value = "certifications")
     public List<Certification> getAllCertifications() {
+        log.info("Fetching all certifications from DB");
         return repo.findAll();
     }
 
+
+    @Cacheable(value = "certifications", key = "#id")
     public Optional<Certification> findById(Long id) {
+        log.info("Fetching certification {} from DB", id);
         return repo.findById(id);
     }
 
+
+    @CacheEvict(value = "certifications", allEntries = true)
     public Certification save(Certification cert) {
         cert.setVerified(isCertificateValid(cert.getCertificateUrl()));
         return repo.save(cert);
     }
 
+    @CacheEvict(value = "certifications", allEntries = true)
     @Transactional
     public void deleteById(Long id) {
         repo.deleteById(id);
     }
 
-    /** ✅ Background async verification of all certificates */
     @Async
     @Transactional
+    @CacheEvict(value = "certifications", allEntries = true)
     public void verifyAllCertificates() {
         List<Certification> certs = repo.findAll();
         for (Certification cert : certs) {
@@ -51,7 +61,7 @@ public class CertificationService {
         repo.saveAll(certs);
     }
 
-    /** ✅ Helper to check if certificate URL is reachable */
+
     private boolean isCertificateValid(String url) {
         if (url == null || url.isBlank()) return false;
         try {
@@ -67,5 +77,6 @@ public class CertificationService {
         }
     }
 }
+
 
 

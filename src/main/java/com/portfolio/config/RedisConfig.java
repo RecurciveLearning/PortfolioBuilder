@@ -31,7 +31,7 @@ public class RedisConfig {
         template.setValueSerializer(jsonSerializer);
         template.setHashValueSerializer(jsonSerializer);
 
-        template.setEnableTransactionSupport(false); // enable only if using transactions
+        template.setEnableTransactionSupport(true); // enable only if using transactions
         template.afterPropertiesSet();
         return template;
     }
@@ -51,6 +51,8 @@ public class RedisConfig {
                 .withCacheConfiguration("blogs", RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofMinutes(5)))
                 .withCacheConfiguration("recommendedBlogs", RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofMinutes(3)))
                 .withCacheConfiguration("searchResults", RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofMinutes(15)))
+                .withCacheConfiguration("certifications",
+                        RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofMinutes(10)))
                 .build();
 
         return cacheManager;

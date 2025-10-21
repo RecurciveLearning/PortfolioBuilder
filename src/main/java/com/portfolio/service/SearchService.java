@@ -1,9 +1,8 @@
 package com.portfolio.service;
-
 import com.portfolio.entity.EmbeddingEntry;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
-
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -16,19 +15,15 @@ public class SearchService {
         this.embeddingLoader = embeddingLoader;
     }
 
-    /**
-     * Search embeddings by query keywords with caching.
-     */
-    @Cacheable(value = "searchResults", key = "#query")
+    // ===========================
+    // Search by keywords with caching
+    // ===========================
+    @Cacheable(value = "searchResults", key = "#root.methodName + ':' + #query.toLowerCase().trim()")
     public List<EmbeddingEntry> searchByKeywords(String query) {
-        if (query == null || query.isBlank()) {
-            return Collections.emptyList();
-        }
+        if (query == null || query.isBlank()) return Collections.emptyList();
 
-        List<EmbeddingEntry> embeddings = embeddingLoader.getEmbeddings();
-        if (embeddings == null || embeddings.isEmpty()) {
-            return Collections.emptyList(); // safe fallback
-        }
+        List<EmbeddingEntry> embeddings = getCachedEmbeddings();
+        if (embeddings.isEmpty()) return Collections.emptyList();
 
         String normalizedQuery = query.toLowerCase().trim();
         List<String> keywords = extractKeywords(normalizedQuery);
@@ -42,22 +37,17 @@ public class SearchService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Generate a safe text response for a query and matching embeddings.
-     */
+    // ===========================
+    // Generate user-friendly response
+    // ===========================
     public String generateResponse(String query, List<EmbeddingEntry> matches) {
-        if (query == null || query.isBlank()) {
-            return "Please type something to search.";
-        }
-
-        if (matches == null || matches.isEmpty()) {
-            return generateDefaultResponse(query);
-        }
+        if (query == null || query.isBlank()) return "Please type something to search.";
+        if (matches == null || matches.isEmpty()) return generateDefaultResponse(query);
 
         StringBuilder response = new StringBuilder();
         String normalizedQuery = query.toLowerCase();
 
-        // Add intro based on query patterns
+        // Intro based on query patterns
         if (containsPattern(normalizedQuery, "experience", "work", "job", "career")) {
             response.append("Based on my experience:\n\n");
         } else if (containsPattern(normalizedQuery, "project", "built", "created", "developed")) {
@@ -89,25 +79,42 @@ public class SearchService {
                 default:
                     response.append(cleanText);
             }
-
             response.append("\n");
         }
 
         return response.toString().trim();
     }
 
-    // --- Helper Methods ---
+    // ===========================
+    // Cache embeddings for performance
+    // ===========================
+    @Cacheable(value = "allEmbeddings", key = "'all'", unless = "#result == null || #result.isEmpty()")
+    public List<EmbeddingEntry> getCachedEmbeddings() {
+        List<EmbeddingEntry> embeddings = embeddingLoader.getEmbeddings();
+        return embeddings != null ? embeddings : Collections.emptyList();
+    }
 
+    @CacheEvict(value = {"allEmbeddings", "searchResults"}, allEntries = true)
+    public void refreshCache() {
+        List<EmbeddingEntry> embeddings = embeddingLoader.getEmbeddings();
+        if (embeddings != null && !embeddings.isEmpty()) {
+            getCachedEmbeddings();
+        }
+        System.out.println("Cache refreshed: allEmbeddings and searchResults cleared and embeddings reloaded.");
+    }
+
+
+    // ===========================
+    // Helper Methods
+    // ===========================
     private List<String> extractKeywords(String query) {
         String[] stopWords = {
-                "the", "is", "at", "which", "on", "a", "an", "and", "or", "but", "in", "with", "to",
-                "for", "of", "as", "by", "from", "about", "into", "through", "during", "before", "after",
-                "above", "below", "between", "under", "again", "further", "then", "once", "here", "there",
-                "when", "where", "why", "how", "all", "both", "each", "few", "more", "most", "other",
-                "some", "such", "no", "nor", "not", "only", "own", "same", "so", "than", "too", "very",
-                "can", "will", "just", "should", "now", "what", "who", "do", "does", "did", "your",
-                "you", "me", "my", "i", "am", "are", "was", "were", "be", "been", "being", "have",
-                "has", "had", "having", "tell", "know", "get"
+                "the","is","at","which","on","a","an","and","or","but","in","with","to","for","of","as","by","from","about",
+                "into","through","during","before","after","above","below","between","under","again","further","then","once",
+                "here","there","when","where","why","how","all","both","each","few","more","most","other","some","such",
+                "no","nor","not","only","own","same","so","than","too","very","can","will","just","should","now","what",
+                "who","do","does","did","your","you","me","my","i","am","are","was","were","be","been","being","have",
+                "has","had","having","tell","know","get"
         };
         Set<String> stopWordSet = new HashSet<>(Arrays.asList(stopWords));
 
@@ -120,7 +127,6 @@ public class SearchService {
 
     private double calculateRelevanceScore(EmbeddingEntry entry, List<String> keywords, String query) {
         if (entry == null || entry.getText() == null) return 0.0;
-
         String entryText = entry.getText().toLowerCase();
         double score = 0.0;
 
@@ -133,16 +139,13 @@ public class SearchService {
             }
         }
 
-        if (!keywords.isEmpty() && entryText.contains(query.toLowerCase())) {
-            score += 5.0;
-        }
+        if (!keywords.isEmpty() && entryText.contains(query.toLowerCase())) score += 5.0;
 
         switch (entry.getType()) {
             case "user": score *= 1.5; break;
             case "experience": score *= 1.3; break;
             case "project": score *= 1.2; break;
         }
-
         return score;
     }
 
@@ -160,7 +163,7 @@ public class SearchService {
     }
 
     private String generateDefaultResponse(String query) {
-        String normalizedQuery = (query == null) ? "" : query.toLowerCase();
+        String normalizedQuery = query != null ? query.toLowerCase() : "";
 
         if (containsPattern(normalizedQuery, "hello", "hi", "hey", "greetings")) {
             return "Hello! I'm Himanshu Singh, a Java Backend Developer with 3.1 years of experience. How can I help you today?";

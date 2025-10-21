@@ -27,7 +27,7 @@
         /* Badge animations */
         .org-badge {
             font-weight: 500;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: #fff;
             padding: 0.3rem 0.7rem;
             border-radius: 10px;
@@ -35,6 +35,25 @@
             background-size: 400% 400%;
             animation: gradientBG 8s ease infinite;
             display: inline-block;
+            white-space: nowrap;
+        }
+
+        .badge-verified {
+            background-color: #198754;
+            color: #fff;
+            position: relative;
+        }
+        .badge-verified::after {
+            content: "✨";
+            position: absolute;
+            top: -4px;
+            right: -6px;
+            animation: sparkle 1.5s infinite;
+            font-size: 1rem;
+        }
+        @keyframes sparkle {
+            0%, 100% { opacity: 0; transform: scale(0.5);}
+            50% { opacity: 1; transform: scale(1);}
         }
 
         @keyframes gradientBG {
@@ -43,7 +62,6 @@
             100% {background-position: 0% 50%;}
         }
 
-        .badge-verified { background-color: #198754; color: #fff; }
         .badge-pending { background-color: #6c757d; color: #fff; }
         #pdfModal iframe { width: 100%; height: 80vh; border: none; border-radius: 0 0 15px 15px; }
 
@@ -55,6 +73,13 @@
         /* Animations */
         .fade-in { animation: fadeIn 1s ease forwards; opacity: 0; }
         @keyframes fadeIn { to { opacity: 1; } }
+
+        /* Responsive adjustments */
+        @media (max-width: 576px) {
+            .org-badge { font-size: 0.75rem; padding: 0.25rem 0.5rem; }
+            .card-title { font-size: 1rem; }
+            .form-control-lg, .form-select-lg { font-size: 0.9rem; }
+        }
     </style>
 </head>
 <body class="d-flex flex-column min-vh-100">
@@ -80,11 +105,11 @@
     <h2 class="mb-5 text-center display-6 fw-bold">Certifications</h2>
 
     <!-- Filters -->
-    <div class="row mb-4">
-        <div class="col-md-6 mb-2">
+    <div class="row mb-4 g-2">
+        <div class="col-sm-12 col-md-6">
             <input type="text" id="certSearch" class="form-control form-control-lg" placeholder="Search by name or organization...">
         </div>
-        <div class="col-md-6 mb-2">
+        <div class="col-sm-12 col-md-6">
             <select id="organizationFilter" class="form-select form-select-lg">
                 <option value="">All Organizations</option>
             </select>
@@ -152,7 +177,7 @@
 
             list.forEach((c, index) => {
                 container.append(`
-            <div class="col-md-6 col-lg-4 mb-4 fade-in">
+            <div class="col-sm-12 col-md-6 col-lg-4 mb-4 fade-in">
                 <div class="card cert-card h-100 shadow-sm">
                     <div class="card-body d-flex flex-column justify-content-between">
                         <div>
@@ -162,7 +187,7 @@
                             </h6>
                             <p class="mb-1"><strong>Issue Date:</strong> ${c.issueDate || "-"}</p>
                         </div>
-                        <div class="d-flex justify-content-between align-items-center mt-3">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center mt-3 gap-1">
                             <span class="badge ${c.verified ? 'badge-verified' : 'badge-pending'}">
                                 ${c.verified ? '<i class="bi bi-check2-circle"></i> Verified' : 'Pending'}
                             </span>
