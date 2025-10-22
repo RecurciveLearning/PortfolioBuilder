@@ -5,6 +5,7 @@ import com.portfolio.repository.BlogRepository;
 import com.portfolio.service.CertificationService;
 import com.portfolio.service.PortfolioService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ContentDisposition;
@@ -122,6 +123,12 @@ public class HomeController {
             result.add(map);
         }
         return result;
+    }
+    @GetMapping("/judge0")
+    public String judge0CompilerPage(Model model) {
+        UserProfile profile =  portfolioService.getUserProfile();
+        model.addAttribute("profile", profile);
+        return "judge0_compiler";
     }
 
 }

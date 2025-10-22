@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Notepad</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+
+    <style>
+        body { font-family: 'Segoe UI'; background: #f8f9fa; min-height: 100vh; display: flex; flex-direction: column; }
+        textarea { flex: 1; resize: vertical; padding: 15px; border-radius: 8px; font-size: 16px; font-family: monospace; min-height: 300px; }
+        footer { background: #212529; color: #fff; text-align: center; padding: 10px; margin-top: auto; }
+        .dark-mode { background: #1e1e1e; color: #f8f9fa; }
+        .dark-mode textarea { background: #2d2d2d; color: #fff; border: 1px solid #555; }
+        .note-actions button { margin-left: 5px; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-dark bg-dark">
+    <div class="container-fluid">
+        <div class="navbar-brand text-warning fw-bold">
+            <i class="fas fa-sticky-note"></i>Notepad
+        </div>
+        <div>
+            <select id="noteList" class="form-select d-inline-block w-auto"></select>
+            <button id="newNote" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> New</button>
+            <button id="saveNote" class="btn btn-success btn-sm"><i class="fas fa-save"></i> Save</button>
+            <button id="deleteNote" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i> Delete</button>
+            <button id="pdfBtn" class="btn btn-warning btn-sm"><i class="fas fa-file-pdf"></i></button>
+            <button id="toggleTheme" class="btn btn-secondary btn-sm"><i class="fas fa-moon"></i></button>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-3 flex-grow-1 d-flex flex-column">
+    <input type="hidden" id="noteId">
+    <input type="text" id="noteTitle" class="form-control mb-2" placeholder="Enter note title...">
+    <textarea id="noteContent" placeholder="Start writing your note here..."></textarea>
+
+    <div class="d-flex justify-content-between small text-muted mt-2">
+        <span id="wordCount">Words: 0</span>
+        <span id="charCount">Characters: 0</span>
+    </div>
+</div>
+
+<footer>
+    &copy; 2025 <span th:text="${profile?.name}">Himanshu Singh</span>. All rights reserved.
+</footer>
+
+<script>
+    const noteList = document.getElementById("noteList");
+    const noteId = document.getElementById("noteId");
+    const noteTitle = document.getElementById("noteTitle");
+    const noteContent = document.getElementById("noteContent");
+    const wordCount = document.getElementById("wordCount");
+    const charCount = document.getElementById("charCount");
+
+    // Auto-save tracking
+    let lastSavedContent = "";
+    let isSaving = false;
+    let autoSaveEnabled = true;
+
+    const saveStatus = document.createElement("div");
+    saveStatus.className = "text-end text-muted small mt-1";
+    saveStatus.innerHTML = "All changes saved";
+    document.querySelector(".container").appendChild(saveStatus);
+
+    // Load all notes
+    async function loadNotes() {
+        const res = await fetch("/notes/all");
+        const notes = await res.json();
+        noteList.innerHTML = `<option value="">Select Note</option>`;
+        notes.forEach(n => {
+            const option = document.createElement("option");
+            option.value = n.id;
+            option.textContent = n.title;
+            noteList.appendChild(option);
+        });
+    }
+
+    // Load selected note
+    noteList.addEventListener("change", async () => {
+        const id = noteList.value;
+        if (!id) return;
+        const res = await fetch(`/notes/${id}`);
+        const note = await res.json();
+        noteId.value = note.id;
+        noteTitle.value = note.title;
+        noteContent.value = note.content;
+        updateCounts();
+        lastSavedContent = noteTitle.value + noteContent.value;
+        saveStatus.innerHTML = "All changes saved";
+    });
+
+    // Manual Save button
+    document.getElementById("saveNote").addEventListener("click", async () => {
+        await saveNote(true);
+        await loadNotes();
+    });
+
+    // Save note (used by auto & manual)
+    async function saveNote(isManual = false) {
+        const currentContent = noteTitle.value.trim() + noteContent.value.trim();
+
+        // Prevent saving if empty or unchanged
+        if (isSaving || !currentContent || currentContent === lastSavedContent) return;
+
+        isSaving = true;
+        saveStatus.innerHTML = "<span class='text-warning'>Saving...</span>";
+
+        const note = {
+            id: noteId.value || null,
+            title: noteTitle.value.trim() || "Untitled",
+            content: noteContent.value.trim()
+        };
+
+        try {
+            const res = await fetch("/notes/save", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(note)
+            });
+
+            if (res.ok) {
+                const saved = await res.json();
+                noteId.value = saved.id;
+                lastSavedContent = currentContent;
+                saveStatus.innerHTML = "<span class='text-success'>All changes saved</span>";
+                if (isManual) alert("✅ Note saved successfully!");
+            } else {
+                saveStatus.innerHTML = "<span class='text-danger'>Error saving!</span>";
+            }
+        } catch (e) {
+            console.error(e);
+            saveStatus.innerHTML = "<span class='text-danger'>Failed to connect!</span>";
+        }
+
+        isSaving = false;
+    }
+
+    // Auto-save every 5 seconds if changes exist
+    setInterval(() => {
+        if (autoSaveEnabled) saveNote(false);
+    }, 5000);
+
+    // Delete note
+    document.getElementById("deleteNote").addEventListener("click", async () => {
+        const id = noteList.value || noteId.value;
+        if (!id) return alert("Please select a note to delete!");
+        if (!confirm("Are you sure you want to delete this note?")) return;
+
+        await fetch(`/notes/${id}`, { method: "DELETE" });
+        alert("🗑️ Note deleted successfully!");
+        clearNoteFields();
+        await loadNotes();
+    });
+
+    // New note button
+    document.getElementById("newNote").addEventListener("click", () => {
+        clearNoteFields();
+        autoSaveEnabled = false;
+        saveStatus.innerHTML = "<span class='text-info'>New note — not yet saved</span>";
+        setTimeout(() => autoSaveEnabled = true, 3000); // re-enable autosave after 3 sec
+    });
+
+    // Helper: clear all fields
+    function clearNoteFields() {
+        noteId.value = "";
+        noteTitle.value = "";
+        noteContent.value = "";
+        noteList.value = "";
+        lastSavedContent = "";
+        updateCounts();
+    }
+
+    // Word/char counter
+    noteContent.addEventListener("input", updateCounts);
+    function updateCounts() {
+        const text = noteContent.value.trim();
+        const words = text ? text.split(/\s+/).length : 0;
+        wordCount.textContent = `Words: ${words}`;
+        charCount.textContent = `Characters: ${text.length}`;
+    }
+
+    // Export to PDF (with watermark)
+    document.getElementById("pdfBtn").addEventListener("click", () => {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const title = noteTitle.value || "Untitled Note";
+        const text = noteContent.value || "No content available";
+
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const margin = 15;
+        const textLines = doc.splitTextToSize(text, pageWidth - margin * 2);
+
+        doc.setFontSize(18);
+        doc.text(title, margin, 20);
+        doc.setFontSize(12);
+        doc.text(textLines, margin, 35);
+
+        // watermark
+        doc.setTextColor(200);
+        doc.setFontSize(40);
+        doc.text("Himanshu Singh", pageWidth / 2, 150, { align: "center", angle: 45 });
+
+        doc.save((title || "Note") + ".pdf");
+    });
+
+    // Dark Mode toggle
+    document.getElementById("toggleTheme").addEventListener("click", () => {
+        document.body.classList.toggle("dark-mode");
+    });
+
+    loadNotes();
+</script>
+</body>
+</html>

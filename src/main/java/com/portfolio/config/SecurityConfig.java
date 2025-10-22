@@ -1,4 +1,5 @@
 package com.portfolio.config;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,7 +13,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-
 
 @Configuration
 @EnableWebSecurity
@@ -31,24 +31,26 @@ public class SecurityConfig {
                         // Admin pages
                         .requestMatchers("/admin/**").hasRole("ADMIN")
 
-                        // Public pages
+                        // Public endpoints
                         .requestMatchers(
                                 "/", "/css/**", "/js/**", "/images/**", "/resume/**",
-                                "/contact", "/meeting/request", "/blogs/**",
-                                "/certifications", "/admin/certification/list" , "/certifications/**" // ✅ Make certification list public
+                                "/contact", "/meeting/request", "/blogs/**", "/judge0",
+                                "/certifications", "/admin/certification/list",
+                                "/certifications/**", "/api/jdoodle/**",
+                                "/notes/**"  // ✅ Allow Smart Notepad public access
                         ).permitAll()
 
-                        // Any other request requires authentication
+                        // Everything else requires authentication
                         .anyRequest().authenticated()
                 )
-                // Form login configuration
+                // Login
                 .formLogin(form -> form
                         .loginPage("/admin/login")
                         .loginProcessingUrl("/admin/login")
                         .defaultSuccessUrl("/admin/dashboard", true)
                         .permitAll()
                 )
-                // Logout configuration
+                // Logout
                 .logout(logout -> logout
                         .logoutRequestMatcher(new AntPathRequestMatcher("/admin/logout"))
                         .logoutSuccessUrl("/")
@@ -56,16 +58,21 @@ public class SecurityConfig {
                         .clearAuthentication(true)
                         .permitAll()
                 )
-                // CSRF configuration
+                // ✅ CSRF configuration
                 .csrf(csrf -> csrf
-                        // Ignore CSRF for APIs that are public
-                        .ignoringRequestMatchers("/contact", "/meeting/request", "/api/chat/**", "/admin/certification/list")
+                        .ignoringRequestMatchers(
+                                "/contact",
+                                "/meeting/request",
+                                "/api/chat/**",
+                                "/admin/certification/list",
+                                "/api/jdoodle/**",
+                                "/notes/**"
+                        )
                 );
 
         return http.build();
     }
 
-    // In-memory admin user
     @Bean
     public UserDetailsService userDetailsService() {
         UserDetails admin = User.builder()
@@ -77,7 +84,6 @@ public class SecurityConfig {
         return new InMemoryUserDetailsManager(admin);
     }
 
-    // Password encoder
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();

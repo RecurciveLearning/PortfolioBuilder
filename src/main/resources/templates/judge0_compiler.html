@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Playground</title>
+
+    <!-- Bootstrap & Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- CodeMirror -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.14/codemirror.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.14/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.14/mode/clike/clike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.14/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.14/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.14/addon/edit/closebrackets.min.js"></script>
+
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: #f4f6f9;
+        }
+
+        /* Keep Navbar color same */
+        nav.navbar.bg-dark {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        nav.navbar .brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #ffc107;
+        }
+        nav.navbar .nav-link {
+            color: #f8f9fa;
+            transition: color 0.2s ease;
+        }
+        nav.navbar .nav-link:hover,
+        nav.navbar .nav-link.active {
+            color: #ffc107;
+        }
+
+        /* Container Layout */
+        .playground-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            margin-top: 56px;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            background: #fff;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            gap: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        .top-bar select, .top-bar button {
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        .top-bar button {
+            transition: all 0.2s ease;
+        }
+        .top-bar button:hover {
+            transform: translateY(-1px);
+        }
+
+        /* Input Panel */
+        #inputPanel {
+            background: #fafafa;
+            border-bottom: 1px solid #ddd;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        #inputPanel textarea {
+            flex: 1;
+            resize: none;
+            height: 50px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            padding: 8px;
+            font-size: 0.95rem;
+        }
+
+        /* Split Container */
+        .split-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            background: transparent;
+            padding: 10px;
+        }
+
+        /* Panels */
+        .panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: #fff;
+            border-radius: 12px;
+            margin: 5px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+        }
+
+        /* Divider */
+        .divider {
+            width: 6px;
+            background: #e0e0e0;
+            cursor: col-resize;
+            border-radius: 10px;
+        }
+
+        /* CodeMirror Editor */
+        .CodeMirror {
+            height: 100%;
+            border-radius: 12px 12px 0 0;
+            font-size: 15px;
+            padding: 10px;
+        }
+
+        /* Output Box */
+        .output-box {
+            background: #1e1e1e;
+            color: #f8f9fa;
+            padding: 12px;
+            border-radius: 0 0 12px 12px;
+            font-family: monospace;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            flex: 1;
+            min-height: 50px;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            background: #212529;
+            color: #fff;
+            padding: 10px;
+            font-size: 0.9rem;
+        }
+
+        /* Dark Theme */
+        .dark-theme {
+            background: #1e1e1e;
+            color: #f8f9fa;
+        }
+        .dark-theme .top-bar,
+        .dark-theme #inputPanel {
+            background: #2b2b2b;
+            color: #f8f9fa;
+        }
+        .dark-theme .panel {
+            background: #222;
+            box-shadow: 0 4px 10px rgba(255,255,255,0.05);
+        }
+        .dark-theme .CodeMirror {
+            background: #1e1e1e;
+            color: #f8f9fa;
+        }
+        .dark-theme .output-box {
+            background: #111;
+        }
+
+        * {
+            transition: background 0.3s, color 0.3s;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow-sm">
+    <div class="container-fluid px-4">
+        <!-- Brand Name (Left Side) -->
+        <a class="navbar-brand fw-bold text-warning" th:text="${profile?.name}">Himanshu Singh</a>
+
+        <!-- Hamburger Button for Mobile -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMenu"
+                aria-controls="navbarMenu" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Collapsible Menu -->
+        <div class="collapse navbar-collapse justify-content-end" id="navbarMenu">
+            <ul class="navbar-nav align-items-center mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a href="/" class="nav-link active">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/judge0" class="nav-link">Compiler</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/notes/notepad" class="nav-link">Notepad</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/admin/login" class="nav-link" target="_blank">Admin</a>
+                </li>
+                <li class="nav-item ms-lg-3">
+                    <button id="themeToggle" class="btn btn-warning btn-sm">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="playground-container">
+    <div class="top-bar">
+        <select id="language" class="form-select w-auto">
+            <option value="java:4" selected>Java 17</option>
+            <option value="python3:3">Python 3.9</option>
+            <option value="c:5">C</option>
+            <option value="cpp:5">C++</option>
+            <option value="javascript:4">JavaScript</option>
+        </select>
+        <button id="runBtn" class="btn btn-success"><i class="fas fa-play"></i> Run</button>
+        <button id="suggestBtn" class="btn btn-secondary"><i class="fas fa-lightbulb"></i> Suggest</button>
+        <button id="toggleInput" class="btn btn-outline-primary btn-sm ms-auto"><i class="fas fa-terminal"></i> Input</button>
+    </div>
+
+    <div id="inputPanel" style="display:none;">
+        <textarea id="input" placeholder="Enter program input..."></textarea>
+    </div>
+
+    <div class="split-container">
+        <div class="panel editor-panel">
+            <textarea id="code">// Write your code here</textarea>
+        </div>
+        <div class="divider"></div>
+        <div class="panel output-panel">
+            <pre id="output" class="output-box"></pre>
+        </div>
+    </div>
+</div>
+
+<footer>
+    &copy; 2024 <span th:text="${profile?.name}">Himanshu Singh</span>. All rights reserved.
+</footer>
+
+<script>
+    const editor = CodeMirror.fromTextArea(document.getElementById("code"), {
+        lineNumbers: true,
+        matchBrackets: true,
+        autoCloseBrackets: true,
+        mode: "text/x-java",
+        theme: "default"
+    });
+
+    const languageSelect = document.getElementById("language");
+    languageSelect.addEventListener("change", function() {
+        const lang = this.value.split(":")[0];
+        if(lang==="java") editor.setOption("mode","text/x-java");
+        else if(lang==="cpp"||lang==="c") editor.setOption("mode","text/x-c++src");
+        else if(lang==="python3") editor.setOption("mode","python");
+        else if(lang==="javascript") editor.setOption("mode","javascript");
+    });
+
+    // Theme toggle
+    const themeBtn = document.getElementById("themeToggle");
+    themeBtn.addEventListener("click", () => {
+        document.body.classList.toggle("dark-theme");
+        editor.refresh();
+        themeBtn.innerHTML = document.body.classList.contains("dark-theme") ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+    });
+
+    // Suggest code
+    document.getElementById("suggestBtn").addEventListener("click", function() {
+        const lang = languageSelect.value.split(":")[0];
+        if(lang==="java") editor.setValue("public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"Hello, World!\");\n    }\n}");
+        else if(lang==="python3") editor.setValue("print(\"Hello, World!\")");
+        else if(lang==="cpp") editor.setValue("#include <iostream>\nusing namespace std;\nint main() {\n    cout << \"Hello, World!\" << endl;\n    return 0;\n}");
+        else if(lang==="c") editor.setValue("#include <stdio.h>\nint main() {\n    printf(\"Hello, World!\\n\");\n    return 0;\n}");
+        else if(lang==="javascript") editor.setValue("console.log(\"Hello, World!\");");
+    });
+
+    // Run code
+    document.getElementById("runBtn").addEventListener("click", async () => {
+        const code = editor.getValue();
+        const input = document.getElementById("input").value;
+        const [language, versionIndex] = languageSelect.value.split(":");
+        const outputBox = document.getElementById("output");
+        outputBox.textContent = "Running...";
+        try {
+            const response = await fetch('/api/jdoodle/run', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ code, language, versionIndex, input })
+            });
+            const result = await response.json();
+            outputBox.textContent = result.output || result.error;
+        } catch(err) {
+            outputBox.textContent = "Error: " + err.message;
+        }
+    });
+
+    // Toggle input panel
+    document.getElementById("toggleInput").addEventListener("click", function() {
+        const panel = document.getElementById("inputPanel");
+        panel.style.display = panel.style.display === "none" ? "flex" : "none";
+    });
+
+    // Resizable split
+    const divider = document.querySelector(".divider");
+    const editorPanel = document.querySelector(".editor-panel");
+    const outputPanel = document.querySelector(".output-panel");
+    let isResizing = false;
+
+    divider.addEventListener("mousedown", () => {
+        isResizing = true;
+        document.body.style.cursor = "col-resize";
+    });
+    document.addEventListener("mousemove", (e) => {
+        if(!isResizing) return;
+        const containerWidth = document.querySelector(".split-container").offsetWidth;
+        let newEditorWidth = e.clientX - editorPanel.getBoundingClientRect().left;
+        if(newEditorWidth < 200) newEditorWidth = 200;
+        if(newEditorWidth > containerWidth - 200) newEditorWidth = containerWidth - 200;
+        editorPanel.style.flex = "0 0 " + newEditorWidth + "px";
+        outputPanel.style.flex = "1";
+        editor.refresh();
+    });
+    document.addEventListener("mouseup", () => {
+        isResizing = false;
+        document.body.style.cursor = "default";
+    });
+
+    // === Save / Load Code per Language ===
+    window.addEventListener("load", function () {
+        const lang = languageSelect.value.split(":")[0];
+        const savedCode = localStorage.getItem("code_" + lang);
+        if (savedCode) {
+            editor.setValue(savedCode);
+        }
+    });
+
+    languageSelect.addEventListener("change", function () {
+        const lang = languageSelect.value.split(":")[0];
+        const savedCode = localStorage.getItem("code_" + lang);
+        editor.setValue(savedCode || "");
+    });
+
+    document.getElementById("runBtn").addEventListener("click", function () {
+        const lang = languageSelect.value.split(":")[0];
+        localStorage.setItem("code_" + lang, editor.getValue());
+    });
+
+    // === Download Code ===
+    const downloadBtn = document.createElement("button");
+    downloadBtn.textContent = "⬇️ Download Code";
+    downloadBtn.className = "btn btn-secondary ms-2";
+    document.querySelector(".d-flex").appendChild(downloadBtn);
+
+    downloadBtn.addEventListener("click", function () {
+        const lang = languageSelect.value.split(":")[0];
+        const code = editor.getValue();
+        const blob = new Blob([code], { type: "text/plain" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `code.${getFileExtension(lang)}`;
+        a.click();
+    });
+
+    function getFileExtension(lang) {
+        switch (lang) {
+            case "java": return "java";
+            case "python3": return "py";
+            case "cpp": return "cpp";
+            case "c": return "c";
+            case "javascript": return "js";
+            default: return "txt";
+        }
+    }
+    // === Copy Output ===
+    const copyBtn = document.createElement("button");
+    copyBtn.textContent = "📋 Copy Output";
+    copyBtn.className = "btn btn-outline-light btn-sm mt-2";
+    document.getElementById("output").insertAdjacentElement("afterend", copyBtn);
+
+    copyBtn.addEventListener("click", function () {
+        const output = document.getElementById("output").innerText;
+        navigator.clipboard.writeText(output);
+        copyBtn.textContent = "✅ Copied!";
+        setTimeout(() => (copyBtn.textContent = "📋 Copy Output"), 1500);
+    });
+
+    // === Keyboard Shortcuts ===
+    document.addEventListener("keydown", function (e) {
+        if (e.ctrlKey && e.key === "Enter") {
+            e.preventDefault();
+            document.getElementById("runBtn").click(); // Run code
+        }
+        if (e.ctrlKey && e.key.toLowerCase() === "s") {
+            e.preventDefault();
+            const lang = languageSelect.value.split(":")[0];
+            localStorage.setItem("code_" + lang, editor.getValue());
+            alert("✅ Code saved for " + lang.toUpperCase());
+        }
+        if (e.ctrlKey && e.key.toLowerCase() === "l") {
+            e.preventDefault();
+            const lang = languageSelect.value.split(":")[0];
+            const saved = localStorage.getItem("code_" + lang);
+            if (saved) editor.setValue(saved);
+            alert("📂 Loaded saved code for " + lang.toUpperCase());
+        }
+    });
+</script>
+
+</body>
+</html>
