@@ -1,12 +1,14 @@
 package com.portfolio.service;
-import com.portfolio.config.Judge0Config;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Base64;
 
 @Service
 public class JDoodleService {
@@ -39,15 +41,44 @@ public class JDoodleService {
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(request, headers);
 
+        Map<String, Object> result = new HashMap<>();
+
         try {
             ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
-            return response.getBody();
-        } catch (Exception e) {
-            Map<String, Object> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            return error;
+
+            if (response.getStatusCode() == HttpStatus.TOO_MANY_REQUESTS) {
+                result.put("success", false);
+                result.put("error", "JDoodle execution limit reached. Please wait before trying again.");
+            } else if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                Map<String, Object> body = response.getBody();
+
+                // Check if API returns quota error
+                if (body.containsKey("error") && body.get("error").toString().toLowerCase().contains("quota")) {
+                    result.put("success", false);
+                    result.put("error", "JDoodle execution quota exceeded. Upgrade your plan or wait.");
+                } else {
+                    result.put("success", true);
+                    result.put("data", body);
+                }
+            } else {
+                result.put("success", false);
+                result.put("error", "JDoodle API returned non-OK status: " + response.getStatusCode());
+            }
+
+        } catch (HttpClientErrorException.TooManyRequests ex) {
+            result.put("success", false);
+            result.put("error", "JDoodle execution limit reached. Please try later.");
+        } catch (HttpClientErrorException ex) {
+            result.put("success", false);
+            result.put("error", "Client error: " + ex.getStatusCode() + " - " + ex.getResponseBodyAsString());
+        } catch (RestClientException ex) {
+            result.put("success", false);
+            result.put("error", "Error connecting to JDoodle API: " + ex.getMessage());
+        } catch (Exception ex) {
+            result.put("success", false);
+            result.put("error", "Unexpected error: " + ex.getMessage());
         }
+
+        return result;
     }
 }
-
-
