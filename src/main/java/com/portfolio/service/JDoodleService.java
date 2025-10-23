@@ -40,7 +40,6 @@ public class JDoodleService {
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(request, headers);
-
         Map<String, Object> result = new HashMap<>();
 
         try {
@@ -49,18 +48,29 @@ public class JDoodleService {
             if (response.getStatusCode() == HttpStatus.TOO_MANY_REQUESTS) {
                 result.put("success", false);
                 result.put("error", "JDoodle execution limit reached. Please wait before trying again.");
-            } else if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+            }
+            else if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 Map<String, Object> body = response.getBody();
 
-                // Check if API returns quota error
-                if (body.containsKey("error") && body.get("error").toString().toLowerCase().contains("quota")) {
+                // ✅ Debugging log (optional)
+                System.out.println("🔹 JDoodle API Response: " + body);
+
+                Object errorValue = body.get("error");
+                if (errorValue != null && errorValue.toString().toLowerCase().contains("quota")) {
                     result.put("success", false);
                     result.put("error", "JDoodle execution quota exceeded. Upgrade your plan or wait.");
-                } else {
+                }
+                else if (body.get("output") != null) {
                     result.put("success", true);
+                    result.put("output", body.get("output"));
                     result.put("data", body);
                 }
-            } else {
+                else {
+                    result.put("success", false);
+                    result.put("error", "No output received from JDoodle. Check your code or language settings.");
+                }
+            }
+            else {
                 result.put("success", false);
                 result.put("error", "JDoodle API returned non-OK status: " + response.getStatusCode());
             }
@@ -78,6 +88,9 @@ public class JDoodleService {
             result.put("success", false);
             result.put("error", "Unexpected error: " + ex.getMessage());
         }
+
+        // ✅ Log final result for clarity
+        System.out.println("✅ Final JDoodleService Result: " + result);
 
         return result;
     }

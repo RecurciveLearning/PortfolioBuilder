@@ -15,9 +15,7 @@ public class SearchService {
         this.embeddingLoader = embeddingLoader;
     }
 
-    // ===========================
-    // Search by keywords with caching
-    // ===========================
+
     @Cacheable(value = "searchResults", key = "#root.methodName + ':' + #query.toLowerCase().trim()")
     public List<EmbeddingEntry> searchByKeywords(String query) {
         if (query == null || query.isBlank()) return Collections.emptyList();
@@ -37,9 +35,7 @@ public class SearchService {
                 .collect(Collectors.toList());
     }
 
-    // ===========================
-    // Generate user-friendly response
-    // ===========================
+
     public String generateResponse(String query, List<EmbeddingEntry> matches) {
         if (query == null || query.isBlank()) return "Please type something to search.";
         if (matches == null || matches.isEmpty()) return generateDefaultResponse(query);
@@ -85,9 +81,7 @@ public class SearchService {
         return response.toString().trim();
     }
 
-    // ===========================
-    // Cache embeddings for performance
-    // ===========================
+
     @Cacheable(value = "allEmbeddings", key = "'all'", unless = "#result == null || #result.isEmpty()")
     public List<EmbeddingEntry> getCachedEmbeddings() {
         List<EmbeddingEntry> embeddings = embeddingLoader.getEmbeddings();
@@ -104,9 +98,6 @@ public class SearchService {
     }
 
 
-    // ===========================
-    // Helper Methods
-    // ===========================
     private List<String> extractKeywords(String query) {
         String[] stopWords = {
                 "the","is","at","which","on","a","an","and","or","but","in","with","to","for","of","as","by","from","about",

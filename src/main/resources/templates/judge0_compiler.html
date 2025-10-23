@@ -294,17 +294,32 @@
         const input = document.getElementById("input").value;
         const [language, versionIndex] = languageSelect.value.split(":");
         const outputBox = document.getElementById("output");
-        outputBox.textContent = "Running...";
+
+        outputBox.textContent = "⏳ Running...";
+
         try {
             const response = await fetch('/api/jdoodle/run', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({ code, language, versionIndex, input })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    script: code,
+                    language: language,
+                    versionIndex: versionIndex,
+                    stdin: input
+                })
             });
+
             const result = await response.json();
-            outputBox.textContent = result.output || result.error;
-        } catch(err) {
-            outputBox.textContent = "Error: " + err.message;
+
+            // ✅ Display correct output
+            if (result.success) {
+                outputBox.textContent = result.output || (result.data && result.data.output) || "No output";
+            } else {
+                outputBox.textContent = "❌ Error: " + (result.error || "Unknown error");
+            }
+
+        } catch (err) {
+            outputBox.textContent = "⚠️ Error: " + err.message;
         }
     });
 

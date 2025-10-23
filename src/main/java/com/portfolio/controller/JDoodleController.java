@@ -1,5 +1,6 @@
 package com.portfolio.controller;
 import com.portfolio.service.JDoodleService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
@@ -16,12 +17,14 @@ public class JDoodleController {
     }
 
     @PostMapping("/run")
-    public Map<String, Object> runCode(
-            @RequestParam String code,
-            @RequestParam String language,
-            @RequestParam String versionIndex,
-            @RequestParam(required = false) String input) {
-        return jdoodleService.executeCode(code, language, versionIndex, input);
+    public ResponseEntity<Map<String, Object>> runCode(@RequestBody Map<String, String> payload) {
+        String script = payload.get("script");
+        String language = payload.get("language");
+        String versionIndex = payload.get("versionIndex");
+        String stdin = payload.getOrDefault("stdin", "");
+
+        Map<String, Object> result = jdoodleService.executeCode(script, language, versionIndex, stdin);
+        return ResponseEntity.ok(result);
     }
 }
 
