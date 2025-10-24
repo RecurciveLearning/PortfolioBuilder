@@ -48,7 +48,7 @@ for row in cursor.fetchall():
     embeddings_data.append({"id": row['id'], "type": "experience", "text": text, "embedding": embedding})
 
 # Save to JSON
-with open("embeddings.json", "w", encoding="utf-8") as f:
+with open("../src/main/resources/embeddings.json", "w", encoding="utf-8") as f:
     json.dump(embeddings_data, f, ensure_ascii=False, indent=2)
 
 print("Embeddings saved to embeddings.json")
