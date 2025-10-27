@@ -3,90 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blogs - Portfolio</title>
+    <title>Blogs - Himanshu Singh</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-
     <style>
         body {
-            background-color: #f8f9fa;
+            background: linear-gradient(120deg, #f9fafb, #eef1f5);
             font-family: "Poppins", sans-serif;
+            transition: background 0.4s, color 0.4s;
         }
 
-        /* ---------- Navbar ---------- */
+        /* Navbar */
         .navbar {
-            background-color: #343a40; /* keep original dark */
+            background-color: #0d6efd;
+            transition: background 0.3s ease;
         }
+        .navbar-brand { font-weight: 700; }
+        .nav-link { color: white !important; font-weight: 500; }
+        .nav-link.active { text-decoration: underline; }
 
-        .navbar-brand {
-            font-weight: 700;
-        }
-
-        .nav-link.active {
-            color: #0d6efd !important;
-        }
-
-        /* ---------- Header ---------- */
+        /* Header */
         header.blog-header {
             text-align: center;
-            padding: 50px 0 40px; /* reduce top padding for no gap */
-            background-color: #0d6efd; /* bright blue header */
+            padding: 70px 0 50px;
+            background: linear-gradient(135deg, #0d6efd, #6610f2);
             color: #fff;
-            margin-top: 0; /* no gap */
+            border-bottom-left-radius: 60px;
+            border-bottom-right-radius: 60px;
         }
+        header.blog-header h1 { font-weight: 700; margin-bottom: 0.5rem; }
+        header.blog-header p { opacity: 0.9; font-size: 1.1rem; }
 
-        header.blog-header h1 {
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-        }
-
-        header.blog-header p {
-            opacity: 0.9;
-            font-size: 1.1rem;
-        }
-
-        /* ---------- Blog Cards ---------- */
+        /* Blog Cards */
         .card {
             border: none;
             border-radius: 1rem;
             overflow: hidden;
-            transition: transform 0.3s, box-shadow 0.3s;
-            box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-            background: linear-gradient(145deg, #ffffff, #f4f6f9);
+            transition: all 0.35s ease;
+            background: #fff;
+            box-shadow: 0 8px 18px rgba(0,0,0,0.08);
         }
-
         .card:hover {
-            transform: translateY(-8px);
+            transform: translateY(-6px);
             box-shadow: 0 14px 30px rgba(0,0,0,0.15);
         }
-
         .card-img-top {
             height: 220px;
             object-fit: cover;
             transition: transform 0.4s ease;
         }
+        .card:hover .card-img-top { transform: scale(1.05); }
 
-        .card:hover .card-img-top {
-            transform: scale(1.05);
-        }
-
-        .card-body {
-            padding: 1.5rem;
-        }
-
-        .card-title {
-            font-weight: 600;
-            font-size: 1.25rem;
-            margin-bottom: 0.6rem;
-            color: #0d6efd;
-        }
-
-        .card-text {
-            color: #555;
-            font-size: 0.95rem;
-            min-height: 60px;
-        }
-
+        .card-body { padding: 1.5rem; }
+        .card-title { font-weight: 600; color: #0d6efd; }
+        .card-text { color: #555; min-height: 60px; }
         .btn-read-more {
             background-color: #0d6efd;
             border: none;
@@ -96,55 +66,76 @@
             padding: 0.45rem 1.1rem;
             transition: all 0.3s;
         }
+        .btn-read-more:hover { background-color: #0b5ed7; transform: translateY(-2px); }
+        .card-footer { background: transparent; font-size: 0.85rem; color: #6c757d; }
 
-        .btn-read-more:hover {
-            background-color: #0b5ed7;
-            transform: translateY(-2px);
-        }
-
-        .card-footer {
-            border-top: none;
-            background: transparent;
-            font-size: 0.85rem;
-            color: #6c757d;
-        }
-
-        /* ---------- Pagination ---------- */
-        .pagination .page-item.active .page-link {
-            background-color: #0d6efd;
-            border-color: #0d6efd;
-            color: #fff;
-        }
-
+        /* Pagination */
         .pagination .page-link {
             color: #0d6efd;
-            border-radius: 30px;
-            margin: 0 4px;
+            border-radius: 50px;
+            margin: 0 3px;
             font-weight: 500;
-            transition: all 0.3s;
+        }
+        .pagination .page-item.active .page-link {
+            background-color: #0d6efd; border-color: #0d6efd; color: white;
         }
 
-        .pagination .page-link:hover {
-            background-color: rgba(13,110,253,0.1);
-        }
-
-        /* ---------- Footer ---------- */
+        /* Footer */
         footer {
-            background-color: #343a40; /* original dark footer */
+            background-color: #0d6efd;
+            color: #fff;
+            padding: 2rem 0;
+            margin-top: 70px;
+            border-top-left-radius: 60px;
+            border-top-right-radius: 60px;
+        }
+
+        /* Floating Buttons */
+        .floating-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 2000;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             color: white;
-            padding: 1.5rem 0;
-            margin-top: 50px;
-            font-size: 0.95rem;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        .floating-btn:hover { transform: scale(1.1); }
+        #themeBtn { background: #6f42c1; bottom: 80px; }
+        #shareBtn { background: #198754; }
+        #scrollBtn { background: #0d6efd; left: 20px; }
+
+        /* Dark Mode */
+        body.dark {
+            background: linear-gradient(120deg, #181818, #252525);
+            color: #f8f9fa;
+        }
+        body.dark .card { background-color: #212529; color: #fff; }
+        body.dark .card-title { color: #0dcaf0; }
+        body.dark .navbar, body.dark footer { background-color: #111; }
+        body.dark .btn-read-more { background-color: #0dcaf0; }
+
+        /* Search Box */
+        #searchBox {
+            max-width: 400px;
+            margin: 0 auto 2rem;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
         }
     </style>
 </head>
 <body>
 
-<!-- Navbar (original dark navbar kept intact) -->
+<!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-dark fixed-top shadow-sm">
     <div class="container">
-        <a class="navbar-brand fw-bold" href="/">Himanshu Singh</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <a class="navbar-brand" href="/">Himanshu Singh</a>
+        <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
@@ -160,15 +151,17 @@
 <!-- Header -->
 <header class="blog-header">
     <div class="container">
-        <h1>✨ Explore My Blogs</h1>
-        <p>Sharing thoughts, tutorials, and stories</p>
+        <h1>📝 Explore My Blogs</h1>
+        <p>Thoughts, tutorials, and stories worth sharing</p>
     </div>
 </header>
 
 <!-- Blog Grid -->
 <section class="py-5">
-    <div class="container">
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    <div class="container text-center">
+        <input id="searchBox" type="text" class="form-control" placeholder="🔍 Search blog...">
+
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="blogGrid">
             <div th:each="blog : ${blogs}" class="col">
                 <div class="card h-100">
                     <img th:if="${blog.imageUrl != null}" th:src="${blog.imageUrl}" class="card-img-top" alt="Blog Image">
@@ -194,8 +187,7 @@
                 </li>
                 <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages-1)}"
                     th:classappend="${i == currentPage} ? 'active'">
-                    <a class="page-link" th:text="${i+1}"
-                       th:href="@{/blogs(page=${i}, size=${pageSize})}">1</a>
+                    <a class="page-link" th:text="${i+1}" th:href="@{/blogs(page=${i}, size=${pageSize})}">1</a>
                 </li>
                 <li class="page-item" th:classappend="${currentPage == totalPages-1} ? 'disabled'">
                     <a class="page-link" th:href="@{/blogs(page=${currentPage+1}, size=${pageSize})}">Next</a>
@@ -205,11 +197,61 @@
     </div>
 </section>
 
-<!-- Footer (original dark footer kept intact) -->
+<!-- Footer -->
 <footer class="text-center">
     <p class="mb-0">&copy; 2025 Himanshu Singh. All rights reserved.</p>
 </footer>
 
+<!-- Floating Buttons -->
+<div id="themeBtn" class="floating-btn"><i class="fas fa-moon"></i></div>
+<div id="shareBtn" class="floating-btn"><i class="fas fa-share-alt"></i></div>
+<div id="scrollBtn" class="floating-btn" style="display:none;"><i class="fas fa-arrow-up"></i></div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    /* ----------------- 🌙 Theme Toggle ----------------- */
+    const themeBtn = document.getElementById('themeBtn');
+    themeBtn.onclick = () => {
+        document.body.classList.toggle('dark');
+        const dark = document.body.classList.contains('dark');
+        localStorage.setItem('theme', dark ? 'dark' : 'light');
+        themeBtn.innerHTML = dark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+    };
+    if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark');
+        themeBtn.innerHTML = '<i class="fas fa-sun"></i>';
+    }
+
+    /* ----------------- 🔍 Search Filter ----------------- */
+    document.getElementById('searchBox').addEventListener('keyup', function() {
+        const term = this.value.toLowerCase();
+        document.querySelectorAll('#blogGrid .card').forEach(card => {
+            const title = card.querySelector('.card-title').innerText.toLowerCase();
+            const text = card.querySelector('.card-text').innerText.toLowerCase();
+            card.parentElement.style.display = (title.includes(term) || text.includes(term)) ? '' : 'none';
+        });
+    });
+
+    /* ----------------- 🔗 Share Button ----------------- */
+    document.getElementById('shareBtn').onclick = async () => {
+        if (navigator.share) {
+            await navigator.share({
+                title: document.title,
+                text: "Check out these amazing blogs by Himanshu Singh!",
+                url: window.location.href
+            });
+        } else {
+            navigator.clipboard.writeText(window.location.href);
+            alert("🔗 Link copied to clipboard!");
+        }
+    };
+
+    /* ----------------- 🚀 Scroll to Top ----------------- */
+    const scrollBtn = document.getElementById('scrollBtn');
+    window.addEventListener('scroll', () => {
+        scrollBtn.style.display = window.scrollY > 200 ? 'flex' : 'none';
+    });
+    scrollBtn.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+</script>
 </body>
 </html>

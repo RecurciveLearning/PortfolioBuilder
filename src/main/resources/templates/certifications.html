@@ -6,6 +6,11 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- jsPDF + html2canvas for PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
     <style>
         body {
             background: linear-gradient(to right, #f8f9fa, #e9ecef);
@@ -80,6 +85,18 @@
             .card-title { font-size: 1rem; }
             .form-control-lg, .form-select-lg { font-size: 0.9rem; }
         }
+
+        /* Theme support */
+        .dark-theme {
+            background: linear-gradient(90deg, #0f1723, #111827);
+            color: #e6eef8;
+        }
+        .dark-theme .navbar { background: #0b1220 !important; }
+        .dark-theme .card { background: #0f1723; border-color: rgba(255,255,255,0.04); color: #e6eef8; }
+        .dark-theme .org-badge { filter: brightness(0.95); }
+        .dark-theme .badge-pending { background-color: #444; }
+        .top-controls .btn { white-space: nowrap; }
+        .stats-panel { min-width: 220px; }
     </style>
 </head>
 <body class="d-flex flex-column min-vh-100">
@@ -100,19 +117,65 @@
     </div>
 </nav>
 
+<!-- Shared banner placeholder (will appear when using share links) -->
+<div id="sharedBannerPlaceholder"></div>
+
 <!-- Main content -->
 <div class="container flex-grow-1 py-5">
-    <h2 class="mb-5 text-center display-6 fw-bold">Certifications</h2>
+    <h2 class="mb-3 text-center display-6 fw-bold">Certifications</h2>
 
-    <!-- Filters -->
-    <div class="row mb-4 g-2">
-        <div class="col-sm-12 col-md-6">
+    <!-- Top controls: search, filter, sort, exports, theme, stats -->
+    <div class="row mb-4 g-2 align-items-center top-controls">
+        <div class="col-sm-12 col-md-4">
             <input type="text" id="certSearch" class="form-control form-control-lg" placeholder="Search by name or organization...">
         </div>
-        <div class="col-sm-12 col-md-6">
+
+        <div class="col-sm-6 col-md-2">
             <select id="organizationFilter" class="form-select form-select-lg">
                 <option value="">All Organizations</option>
             </select>
+        </div>
+
+        <div class="col-sm-6 col-md-2">
+            <select id="sortBy" class="form-select form-select-lg">
+                <option value="name">Sort: Name (A → Z)</option>
+                <option value="date_desc">Sort: Issue Date (Newest)</option>
+                <option value="date_asc">Sort: Issue Date (Oldest)</option>
+                <option value="verified">Sort: Verified First</option>
+            </select>
+        </div>
+
+        <div class="col-sm-12 col-md-4 d-flex gap-2 justify-content-end">
+            <div class="d-flex gap-2">
+                <button id="exportPdfBtn" class="btn btn-outline-primary"><i class="bi bi-file-earmark-pdf"></i> Export PDF</button>
+                <button id="exportCsvBtn" class="btn btn-outline-secondary"><i class="bi bi-file-earmark-spreadsheet"></i> Export CSV</button>
+                <button id="themeToggleBtn" class="btn btn-outline-warning"><i class="bi bi-moon-stars"></i> Theme</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats + Cache notice -->
+    <div class="row mb-3 align-items-center">
+        <div class="col-md-8">
+            <div id="cacheNotice" class="alert alert-info d-none p-2 mb-0">Using cached data (offline mode).</div>
+        </div>
+        <div class="col-md-4 d-flex justify-content-end">
+            <div class="card stats-panel p-2 shadow-sm">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="small text-muted">Total Certificates</div>
+                        <div id="totalCount" class="h5 mb-0">0</div>
+                    </div>
+                    <div class="text-end">
+                        <div class="small text-muted">Verified %</div>
+                        <div id="verifiedPct" class="h5 mb-0">0%</div>
+                    </div>
+                    <div class="text-end ms-3">
+                        <div class="small text-muted">Pending %</div>
+                        <div id="pendingPct" class="h5 mb-0">0%</div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -122,7 +185,7 @@
     </div>
 </div>
 
-<!-- PDF Modal -->
+<!-- PDF Modal (used for previewing certificate files) -->
 <div class="modal fade" id="pdfModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content rounded-4 shadow">
@@ -142,83 +205,448 @@
     <p class="mb-0 footer-text">&copy; 2024 <span th:text="${profile?.name}">Himanshu Singh</span>. All rights reserved. <a href="/">Himanshu Singh</a></p>
 </footer>
 
-<!-- Scripts -->
+<!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
     $(document).ready(function () {
+        // --- Data containers ---
         let certifications = [];
         let organizations = new Set();
+        const CACHE_KEY = "certifications_cache_v1";
+        const THEME_KEY = "cert_theme_v1";
 
-        // Fetch certifications
-        $.get("/certifications/list", function(list) {
-            certifications = list;
-            populateOrganizations(list);
-            renderCerts(list);
-        });
+        const $certTable = $("#certTableBody");
+        const $orgFilter = $("#organizationFilter");
+        const $search = $("#certSearch");
+        const $sort = $("#sortBy");
+        const $cacheNotice = $("#cacheNotice");
 
-        function populateOrganizations(list) {
-            const select = $("#organizationFilter");
-            list.forEach(c => {
-                if(c.organization) organizations.add(c.organization);
-            });
-            Array.from(organizations).sort().forEach(org => {
-                select.append(`<option value="${org}">${org}</option>`);
-            });
+        // --- helpers ---
+        function formatDate(d) {
+            if (!d) return "-";
+            try {
+                const dt = new Date(d);
+                if (isNaN(dt)) return d;
+                return dt.toLocaleDateString();
+            } catch (e) { return d; }
         }
 
-        function renderCerts(list) {
-            const container = $("#certTableBody");
-            container.empty();
+        function sortCerts(list) {
+            const mode = $sort.val();
+            const copy = list.slice();
+            if (mode === "name") {
+                copy.sort((a,b) => (a.name||"").localeCompare(b.name||""));
+            } else if (mode === "date_desc") {
+                copy.sort((a,b) => new Date(b.issueDate||0) - new Date(a.issueDate||0));
+            } else if (mode === "date_asc") {
+                copy.sort((a,b) => new Date(a.issueDate||0) - new Date(b.issueDate||0));
+            } else if (mode === "verified") {
+                copy.sort((a,b) => (b.verified?1:0) - (a.verified?1:0));
+            }
+            return copy;
+        }
 
-            if(list.length === 0){
-                container.append('<div class="col-12 text-center"><p>No certifications found</p></div>');
+        function computeStats(list) {
+            const total = list.length;
+            const verified = list.filter(c => c.verified).length;
+            const pending = total - verified;
+            const verifiedPct = total ? Math.round((verified/total) * 100) : 0;
+            const pendingPct = total ? Math.round((pending/total) * 100) : 0;
+            $("#totalCount").text(total);
+            $("#verifiedPct").text(verifiedPct + "%");
+            $("#pendingPct").text(pendingPct + "%");
+        }
+
+        // --- Render cards ---
+        function renderCerts(list) {
+            $certTable.empty();
+            if (!list.length) {
+                $certTable.append('<div class="col-12 text-center"><p>No certifications found</p></div>');
+                computeStats([]);
                 return;
             }
+            computeStats(list);
+            const sorted = sortCerts(list);
+            sorted.forEach((c, index) => {
+                // use provided id or fallback to index-based id
+                const id = c.id || ("local-" + index + "-" + btoa((c.name||"").slice(0,20)));
+                const verifiedHtml = c.verified ? '<span class="badge badge-verified"><i class="bi bi-check2-circle"></i> Verified</span>'
+                    : '<span class="badge badge-pending">Pending</span>';
+                const viewBtn = c.certificateUrl ? `<button class="btn btn-outline-primary btn-sm view-pdf" data-url="${c.certificateUrl}">View</button>` : '';
+                const shareBtn = `<button class="btn btn-outline-info btn-sm share-cert" data-id="${id}" data-cert='${escapeHtml(JSON.stringify(c))}'><i class="bi bi-share-fill"></i> Share</button>`;
+                const aiBtn = `<button class="btn btn-outline-secondary btn-sm ai-summary" data-id="${id}" data-name="${escapeHtml(c.name||'')}" data-org="${escapeHtml(c.organization||'')}"><i class="bi bi-chat-left-text"></i> AI</button>`;
 
-            list.forEach((c, index) => {
-                container.append(`
-            <div class="col-sm-12 col-md-6 col-lg-4 mb-4 fade-in">
-                <div class="card cert-card h-100 shadow-sm">
-                    <div class="card-body d-flex flex-column justify-content-between">
-                        <div>
-                            <h5 class="card-title">${c.name}</h5>
-                            <h6 class="card-subtitle mb-2">
-                                <span class="org-badge">${c.organization}</span>
-                            </h6>
-                            <p class="mb-1"><strong>Issue Date:</strong> ${c.issueDate || "-"}</p>
-                        </div>
-                        <div class="d-flex flex-wrap justify-content-between align-items-center mt-3 gap-1">
-                            <span class="badge ${c.verified ? 'badge-verified' : 'badge-pending'}">
-                                ${c.verified ? '<i class="bi bi-check2-circle"></i> Verified' : 'Pending'}
-                            </span>
-                            ${c.certificateUrl ? `<button class="btn btn-outline-primary btn-sm view-pdf" data-url="${c.certificateUrl}">View</button>` : ''}
+                const card = `
+                <div class="col-sm-12 col-md-6 col-lg-4 mb-4 fade-in">
+                    <div class="card cert-card h-100 shadow-sm">
+                        <div class="card-body d-flex flex-column justify-content-between">
+                            <div>
+                                <h5 class="card-title">${escapeHtml(c.name||'-')}</h5>
+                                <h6 class="card-subtitle mb-2">
+                                    <span class="org-badge">${escapeHtml(c.organization||'-')}</span>
+                                </h6>
+                                <p class="mb-1"><strong>Issue Date:</strong> ${escapeHtml(formatDate(c.issueDate))}</p>
+                                ${c.description ? `<p class="small text-muted mb-0">${escapeHtml(c.description)}</p>` : ''}
+                            </div>
+                            <div class="d-flex flex-wrap justify-content-between align-items-center mt-3 gap-1">
+                                <div>${verifiedHtml}</div>
+                                <div class="d-flex gap-1">
+                                    ${viewBtn}
+                                    ${shareBtn}
+                                    ${aiBtn}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            `);
+                `;
+                $certTable.append(card);
             });
 
-            $(".view-pdf").click(function() {
+            // wire up view / share / ai buttons
+            $(".view-pdf").off("click").on("click", function() {
                 const url = $(this).data("url");
                 $("#pdfFrame").attr("src", url);
                 const pdfModal = new bootstrap.Modal(document.getElementById('pdfModal'));
                 pdfModal.show();
             });
+
+            $(".share-cert").off("click").on("click", function() {
+                const certData = $(this).data("cert");
+                const id = $(this).data("id");
+
+                // Prefer an internal view path if your backend supports it:
+                // const link = `${window.location.origin}/certifications/view?id=${encodeURIComponent(id)}`;
+                // If id isn't meaningful on server, we encode cert in URL (short option: use localStorage)
+                try {
+                    // store the shared cert in localStorage for quick load by viewer
+                    localStorage.setItem("shared_cert_" + id, JSON.stringify(JSON.parse(unescapeHtml(certData))));
+                    const link = `${window.location.origin}${window.location.pathname}?sharedId=${encodeURIComponent(id)}`;
+                    navigator.clipboard.writeText(link).then(() => {
+                        alert("✅ Share link copied to clipboard!");
+                    }, () => {
+                        prompt("Copy this link manually:", link);
+                    });
+                } catch (e) {
+                    console.error(e);
+                    alert("Could not create share link.");
+                }
+            });
+
+            $(".ai-summary").off("click").on("click", async function() {
+                const name = $(this).data("name");
+                const org = $(this).data("org");
+                const id = $(this).data("id");
+                const $btn = $(this);
+                $btn.prop("disabled", true).text("Thinking...");
+                // Best-effort: call backend AI endpoint /api/ai/summary if available
+                try {
+                    const res = await fetch('/api/ai/summary', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({name, organization: org})
+                    });
+                    if (!res.ok) throw new Error("No AI endpoint");
+                    const data = await res.json();
+                    alert(`AI Summary:\n\n${data.summary || data.text || "No summary returned."}`);
+                } catch (err) {
+                    // fallback: simple generated summary based on fields
+                    const fallback = `Certificate "${name}" from "${org}".\n\nNo AI service available — this is a short generated summary.`;
+                    alert(fallback);
+                } finally {
+                    $btn.prop("disabled", false).html('<i class="bi bi-chat-left-text"></i> AI');
+                }
+            });
         }
 
+        // --- escape helpers to avoid injecting HTML ---
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#039;');
+        }
+        function unescapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replaceAll('&amp;', '&')
+                .replaceAll('&lt;', '<')
+                .replaceAll('&gt;', '>')
+                .replaceAll('&quot;', '"')
+                .replaceAll('&#039;', "'");
+        }
+        // For storing JSON safely in attribute, we escape it
+        function escapeHtmlAttr(s) {
+            return escapeHtml(s).replaceAll('"','&quot;');
+        }
+        function unescapeHtmlAttr(s) {
+            return unescapeHtml(s);
+        }
+
+        // --- Filtering logic ---
         function filterCerts() {
-            const query = $("#certSearch").val().toLowerCase();
-            const org = $("#organizationFilter").val();
-            const filtered = certifications.filter(c =>
-                (c.name.toLowerCase().includes(query) || c.organization.toLowerCase().includes(query)) &&
-                (org === "" || c.organization === org)
-            );
+            const q = $search.val().toLowerCase().trim();
+            const org = $orgFilter.val();
+            const filtered = certifications.filter(c => {
+                const name = (c.name || "").toLowerCase();
+                const organization = (c.organization || "").toLowerCase();
+                const matchesQuery = !q || name.includes(q) || organization.includes(q);
+                const matchesOrg = !org || c.organization === org;
+                return matchesQuery && matchesOrg;
+            });
             renderCerts(filtered);
         }
 
-        $("#certSearch").on("input", filterCerts);
-        $("#organizationFilter").on("change", filterCerts);
+        $search.on("input", filterCerts);
+        $orgFilter.on("change", filterCerts);
+        $sort.on("change", filterCerts);
+
+        // --- Export CSV (Excel-friendly) ---
+        $("#exportCsvBtn").on("click", function() {
+            // export currently filtered view
+            const rows = [];
+            const q = $search.val().toLowerCase().trim();
+            const org = $orgFilter.val();
+            const filtered = certifications.filter(c => {
+                const name = (c.name || "").toLowerCase();
+                const organization = (c.organization || "").toLowerCase();
+                const matchesQuery = !q || name.includes(q) || organization.includes(q);
+                const matchesOrg = !org || c.organization === org;
+                return matchesQuery && matchesOrg;
+            });
+
+            if (!filtered.length) { alert("No data to export."); return; }
+
+            rows.push(["Name","Organization","Issue Date","Verified","Certificate URL","Description"]);
+            filtered.forEach(c => {
+                rows.push([
+                    c.name || "",
+                    c.organization || "",
+                    c.issueDate || "",
+                    c.verified ? "Yes" : "No",
+                    c.certificateUrl || "",
+                    (c.description || "").replace(/\r?\n|\r/g, " ")
+                ]);
+            });
+
+            const csvContent = rows.map(r => r.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(",")).join("\r\n");
+            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "certifications_export.csv";
+            a.click();
+        });
+
+        // --- Export PDF of current view (use html2canvas + jsPDF) ---
+        $("#exportPdfBtn").on("click", async function() {
+            const exportContainer = document.createElement("div");
+            exportContainer.style.padding = "20px";
+            exportContainer.style.width = "800px";
+            exportContainer.style.background = document.body.classList.contains("dark-theme") ? "#0f1723" : "#ffffff";
+            // build a minimal printable snapshot of current filtered certs
+            const q = $search.val().toLowerCase().trim();
+            const org = $orgFilter.val();
+            const filtered = certifications.filter(c => {
+                const name = (c.name || "").toLowerCase();
+                const organization = (c.organization || "").toLowerCase();
+                const matchesQuery = !q || name.includes(q) || organization.includes(q);
+                const matchesOrg = !org || c.organization === org;
+                return matchesQuery && matchesOrg;
+            });
+            if (!filtered.length) { alert("No data to export."); return; }
+
+            const header = document.createElement("div");
+            header.innerHTML = `<h2>Certifications Export</h2><p>${new Date().toLocaleString()}</p><hr/>`;
+            exportContainer.appendChild(header);
+
+            filtered.forEach(c => {
+                const item = document.createElement("div");
+                item.style.marginBottom = "12px";
+                item.innerHTML = `<strong>${escapeHtml(c.name || "")}</strong><br/>
+                                  <small>${escapeHtml(c.organization || "")} • ${escapeHtml(formatDate(c.issueDate))} • ${c.verified ? "Verified" : "Pending"}</small>
+                                  <p style="margin:6px 0">${escapeHtml(c.description || "")}</p>`;
+                exportContainer.appendChild(item);
+            });
+
+            document.body.appendChild(exportContainer);
+            try {
+                const canvas = await html2canvas(exportContainer, { scale: 2, backgroundColor: null });
+                const imgData = canvas.toDataURL('image/png');
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'pt', 'a4');
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                // fit image into page with margins
+                const imgProps = { width: canvas.width, height: canvas.height };
+                const ratio = Math.min(pageWidth / imgProps.width, pageHeight / imgProps.height);
+                const imgWidth = imgProps.width * ratio;
+                const imgHeight = imgProps.height * ratio;
+                pdf.addImage(imgData, 'PNG', (pageWidth - imgWidth) / 2, 40, imgWidth, imgHeight);
+                pdf.save('certifications_export.pdf');
+            } catch (err) {
+                console.error(err);
+                alert("PDF export failed.");
+            } finally {
+                exportContainer.remove();
+            }
+        });
+
+        // --- Theme toggle (persist in localStorage) ---
+        const $themeToggle = $("#themeToggleBtn");
+        function applySavedTheme() {
+            const theme = localStorage.getItem(THEME_KEY) || "light";
+            if (theme === "dark") {
+                $("body").addClass("dark-theme");
+                $themeToggle.html('<i class="bi bi-sun"></i> Light');
+            } else {
+                $("body").removeClass("dark-theme");
+                $themeToggle.html('<i class="bi bi-moon-stars"></i> Dark');
+            }
+        }
+        applySavedTheme();
+        $themeToggle.on("click", function() {
+            const isDark = $("body").hasClass("dark-theme");
+            if (isDark) {
+                $("body").removeClass("dark-theme");
+                localStorage.setItem(THEME_KEY, "light");
+                $themeToggle.html('<i class="bi bi-moon-stars"></i> Dark');
+            } else {
+                $("body").addClass("dark-theme");
+                localStorage.setItem(THEME_KEY, "dark");
+                $themeToggle.html('<i class="bi bi-sun"></i> Light');
+            }
+        });
+
+        // --- Offline cache: load cached data on fetch failure ---
+        function loadFromCacheIfAvailable() {
+            const raw = localStorage.getItem(CACHE_KEY);
+            if (!raw) return false;
+            try {
+                const cached = JSON.parse(raw);
+                certifications = cached;
+                populateOrganizations(certifications);
+                renderCerts(certifications);
+                $cacheNotice.removeClass("d-none");
+                return true;
+            } catch (e) {
+                console.warn("Cache parse error", e);
+                return false;
+            }
+        }
+
+        // --- initial fetch of certifications ---
+        function fetchCerts() {
+            $certTable.html('<div class="col-12 text-center">Loading...</div>');
+            $.get("/certifications/list").done(function(list) {
+                // Save to cache
+                certifications = list || [];
+                try { localStorage.setItem(CACHE_KEY, JSON.stringify(certifications)); } catch(e){ console.warn("Cache save failed", e); }
+                $cacheNotice.addClass("d-none");
+                populateOrganizations(certifications);
+                renderCerts(certifications);
+            }).fail(function() {
+                // fetch failed -> fallback to cache
+                const ok = loadFromCacheIfAvailable();
+                if (!ok) {
+                    $certTable.html('<div class="col-12 text-center"><p class="text-danger">Unable to load certifications. Please try again later.</p></div>');
+                }
+            });
+        }
+        fetchCerts();
+
+        // --- populate organizations filter ---
+        function populateOrganizations(list) {
+            organizations.clear();
+            $orgFilter.empty().append('<option value="">All Organizations</option>');
+            list.forEach(c => { if (c.organization) organizations.add(c.organization); });
+            Array.from(organizations).sort().forEach(org => {
+                $orgFilter.append(`<option value="${escapeHtml(org)}">${escapeHtml(org)}</option>`);
+            });
+        }
+
+        // --- Shared link handling: load shared cert if ?sharedId=... or ?code=... present ---
+        (function handleSharedLink() {
+            const params = new URLSearchParams(window.location.search);
+            const sharedId = params.get("sharedId");
+            const codeParam = params.get("code"); // optional encoded full cert
+            if (sharedId) {
+                // try load from localStorage
+                const raw = localStorage.getItem("shared_cert_" + sharedId);
+                if (raw) {
+                    try {
+                        const cert = JSON.parse(raw);
+                        renderCerts([cert]);
+                        showSharedBanner("Shared certificate loaded. Click 'Save to My Codes' to keep it.", sharedId, cert);
+                        return;
+                    } catch (e) { console.warn(e); }
+                }
+                // fallback: attempt server-side view by id
+                $.get(`/certifications/view?id=${encodeURIComponent(sharedId)}`).done(function(serverCert) {
+                    if (serverCert) {
+                        renderCerts([serverCert]);
+                        showSharedBanner("Shared certificate loaded from server.", sharedId, serverCert);
+                    }
+                }).fail(function() {
+                    // do nothing (silent)
+                });
+            } else if (codeParam) {
+                try {
+                    const decoded = JSON.parse(decodeURIComponent(codeParam));
+                    renderCerts([decoded]);
+                    showSharedBanner("Shared certificate loaded from URL.", "url-shared", decoded);
+                } catch (e) {
+                    console.warn("Invalid code param", e);
+                }
+            }
+        })();
+
+        function showSharedBanner(message, sharedId, cert) {
+            const $placeholder = $("#sharedBannerPlaceholder");
+            const banner = $(`
+                <div class="alert alert-success alert-dismissible fade show mb-0" role="alert">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>${escapeHtml(message)}</div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-light save-shared">Save to My Codes</button>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    </div>
+                </div>`);
+            $placeholder.html(banner);
+            banner.find(".save-shared").on("click", function() {
+                // Save into local cache (append)
+                try {
+                    const cur = JSON.parse(localStorage.getItem(CACHE_KEY) || "[]");
+                    // prevent duplicates by name+org+date
+                    const exists = cur.some(x => x.name === cert.name && x.organization === cert.organization && x.issueDate === cert.issueDate);
+                    if (!exists) {
+                        cur.unshift(cert);
+                        localStorage.setItem(CACHE_KEY, JSON.stringify(cur));
+                        alert("✅ Saved to local certifications cache.");
+                    } else {
+                        alert("This certificate is already in your local cache.");
+                    }
+                    // refresh view
+                    certifications = cur;
+                    populateOrganizations(certifications);
+                    renderCerts(certifications);
+                    banner.alert('close');
+                } catch (e) {
+                    console.error(e);
+                    alert("Failed to save certificate locally.");
+                }
+            });
+        }
+
+        // --- Utility to unescape attribute JSON stored earlier ---
+        function unescapeHtml(s) {
+            if (!s) return s;
+            return s.replaceAll('&quot;', '"').replaceAll('&#039;', "'").replaceAll('&lt;', '<').replaceAll('&gt;', '>').replaceAll('&amp;', '&');
+        }
     });
 </script>
 </body>

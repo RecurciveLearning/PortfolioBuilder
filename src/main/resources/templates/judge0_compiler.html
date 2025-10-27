@@ -8,8 +8,8 @@
     <!-- Bootstrap & Font Awesome -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     <!-- CodeMirror -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.14/codemirror.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.14/codemirror.min.js"></script>
@@ -18,201 +18,73 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.14/mode/javascript/javascript.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.14/addon/edit/closebrackets.min.js"></script>
 
+    <!-- CodeMirror Themes -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.14/theme/dracula.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.14/theme/monokai.min.css">
+
+    <!-- JSZip for exporting all codes -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
     <style>
-        html, body {
-            height: 100%;
-            margin: 0;
-            font-family: 'Inter', 'Segoe UI', sans-serif;
-            background: #f4f6f9;
-        }
+        html, body { height: 100%; margin: 0; font-family: 'Inter', 'Segoe UI', sans-serif; background: #f4f6f9; }
 
-        /* Keep Navbar color same */
-        nav.navbar.bg-dark {
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        }
-        nav.navbar .brand {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #ffc107;
-        }
-        nav.navbar .nav-link {
-            color: #f8f9fa;
-            transition: color 0.2s ease;
-        }
-        nav.navbar .nav-link:hover,
-        nav.navbar .nav-link.active {
-            color: #ffc107;
-        }
+        nav.navbar.bg-dark { box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+        nav.navbar .brand { font-size: 1.5rem; font-weight: 700; color: #ffc107; }
+        nav.navbar .nav-link { color: #f8f9fa; transition: color 0.2s ease; }
+        nav.navbar .nav-link:hover, nav.navbar .nav-link.active { color: #ffc107; }
 
-        /* Container Layout */
-        .playground-container {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            margin-top: 56px;
-        }
+        .playground-container { display: flex; flex-direction: column; height: 100%; margin-top: 56px; }
 
-        /* Top Bar */
-        .top-bar {
-            background: #fff;
-            border-bottom: 1px solid #ddd;
-            display: flex;
-            align-items: center;
-            padding: 12px 20px;
-            gap: 10px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-        }
-        .top-bar select, .top-bar button {
-            border-radius: 8px;
-            font-weight: 500;
-        }
-        .top-bar button {
-            transition: all 0.2s ease;
-        }
-        .top-bar button:hover {
-            transform: translateY(-1px);
-        }
+        .top-bar { background: #fff; border-bottom: 1px solid #ddd; display: flex; align-items: center;
+            padding: 12px 20px; gap: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); flex-wrap: wrap; }
 
-        /* Input Panel */
-        #inputPanel {
-            background: #fafafa;
-            border-bottom: 1px solid #ddd;
-            padding: 10px 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        #inputPanel textarea {
-            flex: 1;
-            resize: none;
-            height: 50px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            padding: 8px;
-            font-size: 0.95rem;
-        }
+        #inputPanel { background: #fafafa; border-bottom: 1px solid #ddd; padding: 10px 20px;
+            display: flex; align-items: center; gap: 10px; }
 
-        /* Split Container */
-        .split-container {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-            background: transparent;
-            padding: 10px;
-        }
+        #inputPanel textarea { flex: 1; resize: none; height: 50px; border-radius: 8px;
+            border: 1px solid #ccc; padding: 8px; font-size: 0.95rem; }
 
-        /* Panels */
-        .panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            background: #fff;
-            border-radius: 12px;
-            margin: 5px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.06);
-        }
+        .split-container { display: flex; flex: 1; overflow: hidden; background: transparent; padding: 10px; }
 
-        /* Divider */
-        .divider {
-            width: 6px;
-            background: #e0e0e0;
-            cursor: col-resize;
-            border-radius: 10px;
-        }
+        .panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #fff;
+            border-radius: 12px; margin: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.06); }
 
-        /* CodeMirror Editor */
-        .CodeMirror {
-            height: 100%;
-            border-radius: 12px 12px 0 0;
-            font-size: 15px;
-            padding: 10px;
-        }
+        .divider { width: 6px; background: #e0e0e0; cursor: col-resize; border-radius: 10px; }
 
-        /* Output Box */
-        .output-box {
-            background: #1e1e1e;
-            color: #f8f9fa;
-            padding: 12px;
-            border-radius: 0 0 12px 12px;
-            font-family: monospace;
-            overflow-x: auto;
-            white-space: pre-wrap;
-            flex: 1;
-            min-height: 50px;
-        }
+        .CodeMirror { height: 100%; border-radius: 12px 12px 0 0; font-size: 15px; padding: 10px; }
 
-        /* Footer */
-        footer {
-            text-align: center;
-            background: #212529;
-            color: #fff;
-            padding: 10px;
-            font-size: 0.9rem;
-        }
+        .output-box { background: #1e1e1e; color: #f8f9fa; padding: 12px; border-radius: 0 0 12px 12px;
+            font-family: monospace; overflow-x: auto; white-space: pre-wrap; flex: 1; min-height: 50px; }
 
-        /* Dark Theme */
-        .dark-theme {
-            background: #1e1e1e;
-            color: #f8f9fa;
-        }
-        .dark-theme .top-bar,
-        .dark-theme #inputPanel {
-            background: #2b2b2b;
-            color: #f8f9fa;
-        }
-        .dark-theme .panel {
-            background: #222;
-            box-shadow: 0 4px 10px rgba(255,255,255,0.05);
-        }
-        .dark-theme .CodeMirror {
-            background: #1e1e1e;
-            color: #f8f9fa;
-        }
-        .dark-theme .output-box {
-            background: #111;
-        }
+        footer { text-align: center; background: #212529; color: #fff; padding: 10px; font-size: 0.9rem; }
 
-        * {
-            transition: background 0.3s, color 0.3s;
-        }
+        .dark-theme { background: #1e1e1e; color: #f8f9fa; }
+        .dark-theme .top-bar, .dark-theme #inputPanel { background: #2b2b2b; color: #f8f9fa; }
+        .dark-theme .panel { background: #222; box-shadow: 0 4px 10px rgba(255,255,255,0.05); }
+        .dark-theme .CodeMirror { background: #1e1e1e; color: #f8f9fa; }
+        .dark-theme .output-box { background: #111; }
+        * { transition: background 0.3s, color 0.3s; }
     </style>
 </head>
+
 <body>
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow-sm">
     <div class="container-fluid px-4">
-        <!-- Brand Name (Left Side) -->
         <a class="navbar-brand fw-bold text-warning" th:text="${profile?.name}">Himanshu Singh</a>
-
-        <!-- Hamburger Button for Mobile -->
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMenu"
-                aria-controls="navbarMenu" aria-expanded="false" aria-label="Toggle navigation">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMenu">
             <span class="navbar-toggler-icon"></span>
         </button>
 
-        <!-- Collapsible Menu -->
         <div class="collapse navbar-collapse justify-content-end" id="navbarMenu">
             <ul class="navbar-nav align-items-center mb-2 mb-lg-0">
-                <li class="nav-item">
-                    <a href="/" class="nav-link active">Home</a>
-                </li>
-                <li class="nav-item">
-                    <a href="/judge0" class="nav-link">Compiler</a>
-                </li>
-                <li class="nav-item">
-                    <a href="/notes/notepad" class="nav-link">Notepad</a>
-                </li>
-                <li class="nav-item">
-                    <a href="#paintPanel" class="nav-link">Paint</a>
-                </li>
-                <li class="nav-item">
-                    <a href="/admin/login" class="nav-link" target="_blank">Admin</a>
-                </li>
+                <li class="nav-item"><a href="/" class="nav-link active">Home</a></li>
+                <li class="nav-item"><a href="/judge0" class="nav-link">Compiler</a></li>
+                <li class="nav-item"><a href="/notes/notepad" class="nav-link">Notepad</a></li>
+                <li class="nav-item"><a href="#paintPanel" class="nav-link">Paint</a></li>
+                <li class="nav-item"><a href="/admin/login" class="nav-link" target="_blank">Admin</a></li>
                 <li class="nav-item ms-lg-3">
-                    <button id="themeToggle" class="btn btn-warning btn-sm">
-                        <i class="fas fa-moon"></i>
-                    </button>
+                    <button id="themeToggle" class="btn btn-warning btn-sm"><i class="fas fa-moon"></i></button>
                 </li>
             </ul>
         </div>
@@ -254,14 +126,13 @@
 
 <script>
     const editor = CodeMirror.fromTextArea(document.getElementById("code"), {
-        lineNumbers: true,
-        matchBrackets: true,
-        autoCloseBrackets: true,
-        mode: "text/x-java",
-        theme: "default"
+        lineNumbers: true, matchBrackets: true, autoCloseBrackets: true,
+        mode: "text/x-java", theme: "default"
     });
 
     const languageSelect = document.getElementById("language");
+    const outputBox = document.getElementById("output");
+
     languageSelect.addEventListener("change", function() {
         const lang = this.value.split(":")[0];
         if(lang==="java") editor.setOption("mode","text/x-java");
@@ -270,117 +141,94 @@
         else if(lang==="javascript") editor.setOption("mode","javascript");
     });
 
-    // Theme toggle
+    // === Theme toggle ===
     const themeBtn = document.getElementById("themeToggle");
     themeBtn.addEventListener("click", () => {
         document.body.classList.toggle("dark-theme");
         editor.refresh();
-        themeBtn.innerHTML = document.body.classList.contains("dark-theme") ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+        themeBtn.innerHTML = document.body.classList.contains("dark-theme")
+            ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
     });
 
-    // Suggest code
+    // === Suggest button ===
     document.getElementById("suggestBtn").addEventListener("click", function() {
         const lang = languageSelect.value.split(":")[0];
-        if(lang==="java") editor.setValue("public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"Hello, World!\");\n    }\n}");
-        else if(lang==="python3") editor.setValue("print(\"Hello, World!\")");
-        else if(lang==="cpp") editor.setValue("#include <iostream>\nusing namespace std;\nint main() {\n    cout << \"Hello, World!\" << endl;\n    return 0;\n}");
-        else if(lang==="c") editor.setValue("#include <stdio.h>\nint main() {\n    printf(\"Hello, World!\\n\");\n    return 0;\n}");
-        else if(lang==="javascript") editor.setValue("console.log(\"Hello, World!\");");
+        if(lang==="java") editor.setValue("public class Main {\n  public static void main(String[] args){\n    System.out.println(\"Hello, World!\");\n  }\n}");
+        else if(lang==="python3") editor.setValue("print('Hello, World!')");
+        else if(lang==="cpp") editor.setValue("#include <iostream>\nusing namespace std;\nint main(){\n  cout << \"Hello, World!\";\n}");
+        else if(lang==="c") editor.setValue("#include <stdio.h>\nint main(){\n  printf(\"Hello, World!\\n\");\n}");
+        else if(lang==="javascript") editor.setValue("console.log('Hello, World!');");
     });
 
-    // Run code
+    // === Run code (JDoodle API) ===
     document.getElementById("runBtn").addEventListener("click", async () => {
         const code = editor.getValue();
         const input = document.getElementById("input").value;
         const [language, versionIndex] = languageSelect.value.split(":");
-        const outputBox = document.getElementById("output");
-
         outputBox.textContent = "⏳ Running...";
-
         try {
             const response = await fetch('/api/jdoodle/run', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    script: code,
-                    language: language,
-                    versionIndex: versionIndex,
-                    stdin: input
-                })
+                body: JSON.stringify({ script: code, language, versionIndex, stdin: input })
             });
-
             const result = await response.json();
-
-            // ✅ Display correct output
-            if (result.success) {
-                outputBox.textContent = result.output || (result.data && result.data.output) || "No output";
-            } else {
-                outputBox.textContent = "❌ Error: " + (result.error || "Unknown error");
-            }
-
-        } catch (err) {
-            outputBox.textContent = "⚠️ Error: " + err.message;
-        }
+            if (result.success) outputBox.textContent = result.output || "No output";
+            else outputBox.textContent = "❌ Error: " + (result.error || "Unknown error");
+        } catch (err) { outputBox.textContent = "⚠️ Error: " + err.message; }
     });
 
-    // Toggle input panel
-    document.getElementById("toggleInput").addEventListener("click", function() {
+    // === Toggle input panel ===
+    document.getElementById("toggleInput").addEventListener("click", () => {
         const panel = document.getElementById("inputPanel");
         panel.style.display = panel.style.display === "none" ? "flex" : "none";
     });
 
-    // Resizable split
+    // === Split resizable ===
     const divider = document.querySelector(".divider");
     const editorPanel = document.querySelector(".editor-panel");
     const outputPanel = document.querySelector(".output-panel");
     let isResizing = false;
-
-    divider.addEventListener("mousedown", () => {
-        isResizing = true;
-        document.body.style.cursor = "col-resize";
-    });
+    divider.addEventListener("mousedown", () => { isResizing = true; document.body.style.cursor = "col-resize"; });
     document.addEventListener("mousemove", (e) => {
         if(!isResizing) return;
         const containerWidth = document.querySelector(".split-container").offsetWidth;
-        let newEditorWidth = e.clientX - editorPanel.getBoundingClientRect().left;
-        if(newEditorWidth < 200) newEditorWidth = 200;
-        if(newEditorWidth > containerWidth - 200) newEditorWidth = containerWidth - 200;
-        editorPanel.style.flex = "0 0 " + newEditorWidth + "px";
-        outputPanel.style.flex = "1";
-        editor.refresh();
+        let newWidth = e.clientX - editorPanel.getBoundingClientRect().left;
+        if(newWidth < 200) newWidth = 200;
+        if(newWidth > containerWidth - 200) newWidth = containerWidth - 200;
+        editorPanel.style.flex = "0 0 " + newWidth + "px";
+        outputPanel.style.flex = "1"; editor.refresh();
     });
-    document.addEventListener("mouseup", () => {
-        isResizing = false;
-        document.body.style.cursor = "default";
-    });
+    document.addEventListener("mouseup", () => { isResizing = false; document.body.style.cursor = "default"; });
 
-    // === Save / Load Code per Language ===
-    window.addEventListener("load", function () {
+    // === Save / Load per language ===
+    window.addEventListener("load", () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const sharedCode = urlParams.get("code");
+        const sharedLang = urlParams.get("lang");
+        if(sharedCode && sharedLang){ languageSelect.value = sharedLang+":4"; editor.setValue(decodeURIComponent(sharedCode)); }
+
         const lang = languageSelect.value.split(":")[0];
         const savedCode = localStorage.getItem("code_" + lang);
-        if (savedCode) {
-            editor.setValue(savedCode);
-        }
+        if (savedCode) editor.setValue(savedCode);
     });
 
-    languageSelect.addEventListener("change", function () {
+    languageSelect.addEventListener("change", () => {
         const lang = languageSelect.value.split(":")[0];
-        const savedCode = localStorage.getItem("code_" + lang);
-        editor.setValue(savedCode || "");
+        editor.setValue(localStorage.getItem("code_" + lang) || "");
     });
 
-    document.getElementById("runBtn").addEventListener("click", function () {
+    document.getElementById("runBtn").addEventListener("click", () => {
         const lang = languageSelect.value.split(":")[0];
         localStorage.setItem("code_" + lang, editor.getValue());
     });
 
-    // === Download Code ===
+    // === Download code ===
     const downloadBtn = document.createElement("button");
     downloadBtn.textContent = "⬇️ Download Code";
     downloadBtn.className = "btn btn-secondary ms-2";
-    document.querySelector(".d-flex").appendChild(downloadBtn);
-
-    downloadBtn.addEventListener("click", function () {
+    document.querySelector(".top-bar").appendChild(downloadBtn);
+    downloadBtn.addEventListener("click", () => {
         const lang = languageSelect.value.split(":")[0];
         const code = editor.getValue();
         const blob = new Blob([code], { type: "text/plain" });
@@ -390,50 +238,99 @@
         a.click();
     });
 
-    function getFileExtension(lang) {
-        switch (lang) {
-            case "java": return "java";
-            case "python3": return "py";
-            case "cpp": return "cpp";
-            case "c": return "c";
-            case "javascript": return "js";
-            default: return "txt";
-        }
-    }
-    // === Copy Output ===
+    // === Copy output ===
     const copyBtn = document.createElement("button");
     copyBtn.textContent = "📋 Copy Output";
     copyBtn.className = "btn btn-outline-light btn-sm mt-2";
-    document.getElementById("output").insertAdjacentElement("afterend", copyBtn);
-
-    copyBtn.addEventListener("click", function () {
-        const output = document.getElementById("output").innerText;
-        navigator.clipboard.writeText(output);
+    outputBox.insertAdjacentElement("afterend", copyBtn);
+    copyBtn.addEventListener("click", () => {
+        navigator.clipboard.writeText(outputBox.innerText);
         copyBtn.textContent = "✅ Copied!";
         setTimeout(() => (copyBtn.textContent = "📋 Copy Output"), 1500);
     });
 
-    // === Keyboard Shortcuts ===
-    document.addEventListener("keydown", function (e) {
-        if (e.ctrlKey && e.key === "Enter") {
-            e.preventDefault();
-            document.getElementById("runBtn").click(); // Run code
-        }
-        if (e.ctrlKey && e.key.toLowerCase() === "s") {
-            e.preventDefault();
-            const lang = languageSelect.value.split(":")[0];
-            localStorage.setItem("code_" + lang, editor.getValue());
-            alert("✅ Code saved for " + lang.toUpperCase());
-        }
-        if (e.ctrlKey && e.key.toLowerCase() === "l") {
-            e.preventDefault();
-            const lang = languageSelect.value.split(":")[0];
-            const saved = localStorage.getItem("code_" + lang);
-            if (saved) editor.setValue(saved);
-            alert("📂 Loaded saved code for " + lang.toUpperCase());
-        }
-    });
-</script>
+    // === Auto-save timer ===
+    setInterval(() => {
+        const lang = languageSelect.value.split(":")[0];
+        localStorage.setItem("code_" + lang, editor.getValue());
+    }, 10000);
 
+    // === Font size + theme picker ===
+    const fontSelect = document.createElement("select");
+    fontSelect.innerHTML = `<option value="13px">Small</option><option value="15px" selected>Medium</option><option value="18px">Large</option>`;
+    fontSelect.className = "form-select w-auto ms-2";
+    const themeSelect = document.createElement("select");
+    themeSelect.innerHTML = `<option value="default">Light</option><option value="dracula">Dracula</option><option value="monokai">Monokai</option>`;
+    themeSelect.className = "form-select w-auto ms-2";
+    document.querySelector(".top-bar").appendChild(fontSelect);
+    document.querySelector(".top-bar").appendChild(themeSelect);
+    fontSelect.addEventListener("change", e => document.querySelector(".CodeMirror").style.fontSize = e.target.value);
+    themeSelect.addEventListener("change", e => editor.setOption("theme", e.target.value));
+
+    // === Export all ===
+    const exportBtn = document.createElement("button");
+    exportBtn.className = "btn btn-dark ms-2";
+    exportBtn.innerHTML = '<i class="fas fa-folder"></i> Export All';
+    document.querySelector(".top-bar").appendChild(exportBtn);
+    exportBtn.addEventListener("click", async () => {
+        const zip = new JSZip();
+        const langs = ["java","python3","cpp","c","javascript"];
+        langs.forEach(l => {
+            const code = localStorage.getItem("code_"+l);
+            if(code) zip.file(`code_${l}.${getFileExtension(l)}`, code);
+        });
+        const blob = await zip.generateAsync({type:"blob"});
+        const a=document.createElement("a");
+        a.href=URL.createObjectURL(blob); a.download="my_codes.zip"; a.click();
+    });
+
+    // === History feature ===
+    function saveHistory(lang, code){
+        let h=JSON.parse(localStorage.getItem("history_"+lang)||"[]");
+        h.unshift({time:new Date().toLocaleTimeString(), code});
+        h=h.slice(0,5);
+        localStorage.setItem("history_"+lang, JSON.stringify(h));
+    }
+    document.getElementById("runBtn").addEventListener("click", ()=>{
+        const lang=languageSelect.value.split(":")[0];
+        saveHistory(lang,editor.getValue());
+    });
+
+    const histBtn=document.createElement("button");
+    histBtn.className="btn btn-outline-dark ms-2";
+    histBtn.innerHTML='<i class="fas fa-clock"></i> History';
+    document.querySelector(".top-bar").appendChild(histBtn);
+    histBtn.addEventListener("click",()=>{
+        const lang=languageSelect.value.split(":")[0];
+        const h=JSON.parse(localStorage.getItem("history_"+lang)||"[]");
+        if(h.length===0)return alert("No history found!");
+        let msg=`🕘 Last ${h.length} versions of ${lang}:\n\n`;
+        h.forEach((e,i)=>msg+=`${i+1}. ${e.time}\n`);
+        const c=prompt(msg+"\nEnter version number to load:");
+        if(c && h[c-1]) editor.setValue(h[c-1].code);
+    });
+
+    // === Share code feature ===
+    const shareBtn = document.createElement("button");
+    shareBtn.className = "btn btn-info ms-2";
+    shareBtn.innerHTML = '<i class="fas fa-share-alt"></i> Share';
+    document.querySelector(".top-bar").appendChild(shareBtn);
+    shareBtn.addEventListener("click", () => {
+        const lang = languageSelect.value.split(":")[0];
+        const code = encodeURIComponent(editor.getValue());
+        const url = `${window.location.origin}${window.location.pathname}?code=${code}&lang=${lang}`;
+        navigator.clipboard.writeText(url);
+        alert("✅ Shareable link copied to clipboard!");
+    });
+
+    function getFileExtension(lang){
+        if(lang==="java")return"java";
+        if(lang==="python3")return"py";
+        if(lang==="cpp")return"cpp";
+        if(lang==="c")return"c";
+        if(lang==="javascript")return"js";
+        return"txt";
+    }
+</script>
 </body>
 </html>
