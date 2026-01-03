@@ -44,3 +44,7 @@ logs/
 # Spring Boot
 application-*.properties
 application-*.yml
+
+# Documentation (exclude from GitHub)
+*.md
+!README.md

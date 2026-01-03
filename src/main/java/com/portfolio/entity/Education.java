@@ -20,6 +20,6 @@ public class Education  implements Serializable {
     @Column(nullable = false)
     private String university;
 
-    @Column(nullable = false)
+    @Column(name = "\"year\"", nullable = false)
     private String year;
 }

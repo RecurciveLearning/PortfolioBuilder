@@ -6,11 +6,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 public class PortfolioService {
@@ -173,19 +175,23 @@ public class PortfolioService {
 
     // ------------------- Contact & Meeting -------------------
 
-    public void saveContactMessage(ContactMessage message) {
+    @Async
+    public CompletableFuture<Void> saveContactMessage(ContactMessage message) {
         message.setSentAt(LocalDateTime.now());
         contactMessageRepository.save(message);
+        return CompletableFuture.completedFuture(null);
     }
 
     public List<ContactMessage> getAllContactMessages() {
         return contactMessageRepository.findAll();
     }
 
-    public void saveMeetingRequest(MeetingRequest request) {
+    @Async
+    public CompletableFuture<Void> saveMeetingRequest(MeetingRequest request) {
         request.setCreatedAt(LocalDateTime.now());
         request.setStatus("PENDING");
         meetingRequestRepository.save(request);
+        return CompletableFuture.completedFuture(null);
     }
 
     public List<MeetingRequest> getAllMeetingRequests() {

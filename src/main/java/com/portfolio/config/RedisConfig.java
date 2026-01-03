@@ -37,24 +37,14 @@ public class RedisConfig {
     }
 
 
-    // CacheManager bean for @Cacheable support
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
-        // Default cache configuration
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
-                .entryTtl(Duration.ofMinutes(10)) // default TTL
+                .entryTtl(Duration.ofHours(1))
                 .disableCachingNullValues();
 
-        // Optionally, define per-cache TTL
-        RedisCacheManager cacheManager = RedisCacheManager.builder(connectionFactory)
+        return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(defaultConfig)
-                .withCacheConfiguration("blogs", RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofMinutes(5)))
-                .withCacheConfiguration("recommendedBlogs", RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofMinutes(3)))
-                .withCacheConfiguration("searchResults", RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofMinutes(15)))
-                .withCacheConfiguration("certifications",
-                        RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofMinutes(10)))
                 .build();
-
-        return cacheManager;
     }
 }

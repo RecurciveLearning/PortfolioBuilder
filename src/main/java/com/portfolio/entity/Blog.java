@@ -6,6 +6,10 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(indexes = {
+    @Index(name = "idx_blog_created_at", columnList = "createdAt"),
+    @Index(name = "idx_blog_category", columnList = "category_id")
+})
 public class Blog implements Serializable {
     private static final long serialVersionUID = 1L;
     @Id

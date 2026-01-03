@@ -1,0 +1,14 @@
+target/
+.git/
+.gitignore
+*.md
+.idea/
+.vscode/
+*.log
+*.iml
+.DS_Store
+node_modules/
+uploads/
+*.sh
+nginx.conf
+docker-compose-cluster.yml
