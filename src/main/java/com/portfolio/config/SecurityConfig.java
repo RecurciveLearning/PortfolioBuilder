@@ -28,17 +28,19 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
+                        // Public endpoints - MUST come first
+                        .requestMatchers(
+                                "/", "/css/**", "/js/**", "/images/**", "/favicon.ico",
+                                "/resume/**", "/contact", "/meeting/request",
+                                "/blogs", "/blogs/**", "/judge0",
+                                "/certifications", "/certifications/**", "/certifications/list",
+                                "/api/jdoodle/**", "/api/chat/**",
+                                "/notes/**", "/notes/notepad",
+                                "/error", "/actuator/health"
+                        ).permitAll()
+
                         // Admin pages
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-
-                        // Public endpoints
-                        .requestMatchers(
-                                "/", "/css/**", "/js/**", "/images/**", "/resume/**",
-                                "/contact", "/meeting/request", "/blogs/**", "/judge0",
-                                "/certifications", "/admin/certification/list",
-                                "/certifications/**", "/api/jdoodle/**",
-                                "/notes/**"  // ✅ Allow Smart Notepad public access
-                        ).permitAll()
 
                         // Everything else requires authentication
                         .anyRequest().authenticated()
@@ -58,14 +60,11 @@ public class SecurityConfig {
                         .clearAuthentication(true)
                         .permitAll()
                 )
-                // ✅ CSRF configuration
+                // CSRF configuration
                 .csrf(csrf -> csrf
                         .ignoringRequestMatchers(
-                                "/contact",
-                                "/meeting/request",
-                                "/api/chat/**",
-                                "/admin/certification/list",
-                                "/api/jdoodle/**",
+                                "/contact", "/meeting/request",
+                                "/api/chat/**", "/api/jdoodle/**",
                                 "/notes/**"
                         )
                 );
